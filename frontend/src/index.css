@@ -1,0 +1,35 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
+  --color-surface: #fafafa;
+  --color-surface-elevated: #ffffff;
+  --color-ink: #0a0a0a;
+  --color-muted: #525252;
+  --color-line: #e5e5e5;
+  --color-accent: #2563eb;
+  --color-accent-soft: #eff6ff;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    @apply antialiased text-ink bg-surface scroll-smooth;
+  }
+  body {
+    @apply m-0 min-h-svh;
+  }
+  :where(a, button, input, textarea, select, [tabindex]):focus-visible {
+    @apply outline-2 outline-offset-2 outline-accent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
