@@ -41,7 +41,7 @@ After cloning this repo, run once from the repo root:
 ./scripts/setup-git-hooks.sh
 ```
 
-That sets `core.hooksPath` to `.githooks`. The `commit-msg` hook rejects messages or trailers such as `Made-with: Cursor`. Do **not** use `git commit --trailer "Made-with: Cursor"` (or similar).
+That sets `core.hooksPath` to `.githooks`. The **`commit-msg` hook strips** trailer-shaped lines such as `Made-with: Cursor` / `Co-authored-by: Cursor` if anything injects them, then finishes the commit. Do **not** rely on trailers for attribution—plain `-m` messages only.
 
 ### Workspace pointer
 
