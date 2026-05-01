@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import type { Market } from '../types/market'
 
 const marketSelect =
-  'id, slug, title, description, yes_price, outcome, updated_at' as const
+  'id, slug, title, description, yes_price, outcome, source_url, closes_at, updated_at' as const
 
 export function useMarkets() {
   return useQuery({

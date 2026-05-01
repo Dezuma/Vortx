@@ -12,8 +12,8 @@ export function Home() {
             News → probability → markets
           </h1>
           <p className="mt-4 max-w-xl text-muted">
-            Cloudflare Pages for the UI, Supabase for live odds + RLS, TanStack Query for fetching. Pair the site with
-            a funnel and systems — see <code className="font-mono text-xs text-ink">vortx/STACK.md</code>.
+            A public oracle layer for business news: Vortx turns visible events into transparent probabilities, then
+            routes serious users into markets, widgets, and paid intelligence.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
@@ -37,12 +37,12 @@ export function Home() {
           </div>
         </div>
         <div className="rounded-xl border border-line bg-surface-elevated p-5 text-sm">
-          <p className="font-semibold text-ink">Growth order</p>
+          <p className="font-semibold text-ink">Operating loop</p>
           <ol className="mt-3 list-decimal space-y-2 pl-4 text-muted">
-            <li>Oracle bot → links to this site</li>
-            <li>Extension + embeds</li>
-            <li>Maker incentives (RLS)</li>
-            <li>Paper prestige league</li>
+            <li>Publish probability with a source</li>
+            <li>Route readers to a market page</li>
+            <li>Capture email or checkout intent</li>
+            <li>Follow up through Supabase-backed systems</li>
           </ol>
         </div>
       </section>
@@ -51,7 +51,7 @@ export function Home() {
 
       <MarketsGrid
         title="Featured markets"
-        subtitle="Demo data until Supabase env is set; then live + realtime invalidation."
+        subtitle="Live rows stream from Supabase; demo rows appear only when env is missing."
       />
 
       <section className="rounded-xl border border-dashed border-line bg-accent-soft/50 p-5 text-sm text-muted">

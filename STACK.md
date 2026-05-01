@@ -48,6 +48,7 @@ Set in **Cloudflare Pages** → your project → **Settings → Environment vari
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_PUBLISHABLE_KEY` (or `VITE_SUPABASE_ANON_KEY` if you use that name)
+- `SUPABASE_SERVICE_ROLE_KEY` (server-only; Worker writes waitlist + checkout audit rows)
 - `STRIPE_PRODUCT_ID`
 - `STRIPE_NEBULA_PRICE_ID`
 - `STRIPE_SUPERNOVA_PRICE_ID`

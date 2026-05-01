@@ -38,6 +38,23 @@ function isMode(value) {
   return value === 'payment' || value === 'subscription'
 }
 
+async function persistCheckoutSession(env, row) {
+  const url = String(env.VITE_SUPABASE_URL || '').replace(/\/$/, '')
+  const key = env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) return
+
+  await fetch(`${url}/rest/v1/checkout_sessions?on_conflict=stripe_session_id`, {
+    method: 'POST',
+    headers: {
+      apikey: key,
+      authorization: `Bearer ${key}`,
+      'content-type': 'application/json',
+      prefer: 'resolution=merge-duplicates',
+    },
+    body: JSON.stringify([row]),
+  }).catch(() => undefined)
+}
+
 export async function onRequestPost({ request, env }) {
   if (!env.STRIPE_SECRET_KEY) {
     return json(
@@ -109,6 +126,17 @@ export async function onRequestPost({ request, env }) {
       { status: stripeRes.status },
     )
   }
+
+  await persistCheckoutSession(env, {
+    stripe_session_id: payload.id,
+    plan: planId,
+    price_id: priceId,
+    mode,
+    status: payload.status || 'created',
+    metadata: {
+      payment_status: payload.payment_status || null,
+    },
+  })
 
   return json({ ok: true, url: payload.url })
 }

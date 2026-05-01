@@ -32,6 +32,8 @@ If Cloudflare is using **Deploy command: `npx wrangler deploy`**, keep the repo 
 
 **Seed data:** Run `supabase/seed.sql` after the schema. It uses `on conflict (slug) do update`, so rerunning it will not fail with duplicate slug errors.
 
+**Worker writes:** Set `SUPABASE_SERVICE_ROLE_KEY` as a Cloudflare secret so `/api/waitlist` can upsert leads and checkout can optionally write `checkout_sessions`. Keep it server-only.
+
 **Payments:** Stripe Checkout Sessions are created by `frontend/functions/api/stripe-checkout.js`. Add `STRIPE_SECRET_KEY` plus the Price IDs below to Cloudflare Pages. Do not put `STRIPE_SECRET_KEY` in `VITE_*` variables or source code.
 
 ```bash

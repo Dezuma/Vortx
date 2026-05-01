@@ -9,6 +9,7 @@ export const DEMO_MARKETS: Market[] = [
     description: 'Illustrative macro contract — wire the oracle to FOMC statements + futures.',
     yes_price: 0.42,
     outcome: 'open',
+    source_url: 'https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm',
   },
   {
     id: 'demo-ma',
@@ -17,6 +18,7 @@ export const DEMO_MARKETS: Market[] = [
     description: 'Resolution uses timestamped headlines you already ingest.',
     yes_price: 0.18,
     outcome: 'open',
+    source_url: 'https://www.sec.gov/edgar/search/',
   },
   {
     id: 'demo-iphone',
@@ -25,5 +27,6 @@ export const DEMO_MARKETS: Market[] = [
     description: 'Observable product SKU / keynote criteria.',
     yes_price: 0.67,
     outcome: 'open',
+    source_url: 'https://www.apple.com/newsroom/',
   },
 ]

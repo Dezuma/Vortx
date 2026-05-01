@@ -47,7 +47,7 @@ function Layout() {
         </Routes>
       </main>
       <footer className="border-t border-line px-5 py-6 text-center text-xs text-muted">
-        Cloudflare Pages · Supabase · TanStack Query
+        Cloudflare Workers + assets · Supabase RLS · Stripe Checkout
       </footer>
     </div>
   )

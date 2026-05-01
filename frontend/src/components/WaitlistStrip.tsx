@@ -1,21 +1,33 @@
 import { useState, type FormEvent } from 'react'
+import { joinWaitlist } from '../lib/waitlist'
 
 /** Funnel placeholder — wire to Supabase Edge Function, Resend, or Loops. */
 export function WaitlistStrip() {
   const [email, setEmail] = useState('')
   const [done, setDone] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  function onSubmit(e: FormEvent) {
+  async function onSubmit(e: FormEvent) {
     e.preventDefault()
-    if (!email.trim()) return
-    setDone(true)
+    const cleanEmail = email.trim().toLowerCase()
+    if (!cleanEmail) return
+
+    setError(null)
+    setIsSubmitting(true)
+    try {
+      await joinWaitlist(cleanEmail)
+      setDone(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to join waitlist')
+      setIsSubmitting(false)
+    }
   }
 
   if (done) {
     return (
       <section className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-950">
-        <strong>Thanks.</strong> Hook this form to your CRM or transactional email — the site builds trust; the system
-        owns follow-up.
+        <strong>Thanks.</strong> You are on the Vortx waitlist. Watch for paper league and oracle beta updates.
       </section>
     )
   }
@@ -43,11 +55,15 @@ export function WaitlistStrip() {
         />
         <button
           type="submit"
+          disabled={isSubmitting}
           className="rounded-lg bg-ink px-5 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800"
         >
-          Join
+          {isSubmitting ? 'Joining…' : 'Join'}
         </button>
       </form>
+      {error ? (
+        <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">{error}</p>
+      ) : null}
     </section>
   )
 }

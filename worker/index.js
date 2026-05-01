@@ -4,6 +4,11 @@ import {
   onRequestGet as stripeCheckoutGet,
   onRequestPost as stripeCheckoutPost,
 } from '../frontend/functions/api/stripe-checkout.js'
+import {
+  onRequestGet as waitlistGet,
+  onRequestOptions as waitlistOptions,
+  onRequestPost as waitlistPost,
+} from '../frontend/functions/api/waitlist.js'
 
 function notFound() {
   return new Response(JSON.stringify({ ok: false, error: 'not_found' }, null, 2), {
@@ -27,6 +32,12 @@ async function handleApi(request, env, ctx) {
   if (url.pathname === '/api/stripe-checkout') {
     if (request.method === 'POST') return stripeCheckoutPost(context)
     if (request.method === 'GET') return stripeCheckoutGet(context)
+  }
+
+  if (url.pathname === '/api/waitlist') {
+    if (request.method === 'POST') return waitlistPost(context)
+    if (request.method === 'OPTIONS') return waitlistOptions(context)
+    if (request.method === 'GET') return waitlistGet(context)
   }
 
   return notFound()

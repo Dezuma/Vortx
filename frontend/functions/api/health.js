@@ -10,6 +10,8 @@ export function onRequestGet({ env }) {
         services: {
           supabaseUrl: has(env.VITE_SUPABASE_URL),
           supabasePublishableKey: has(env.VITE_SUPABASE_PUBLISHABLE_KEY) || has(env.VITE_SUPABASE_ANON_KEY),
+          supabaseServiceRoleKey: has(env.SUPABASE_SERVICE_ROLE_KEY),
+          stripeSecretKey: has(env.STRIPE_SECRET_KEY),
           botAdminToken: has(env.BOT_ADMIN_TOKEN),
           publicSiteUrl: has(env.PUBLIC_SITE_URL),
         },

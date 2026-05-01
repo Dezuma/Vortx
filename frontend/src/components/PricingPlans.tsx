@@ -25,7 +25,7 @@ export function PricingPlans() {
           <h2 className="mt-1 text-2xl font-semibold tracking-tight">Memberships and pilots</h2>
         </div>
         <p className="max-w-sm text-sm text-muted">
-          Uses Stripe Checkout Sessions from a Cloudflare Function. The Stripe secret key stays server-only.
+          Checkout starts on the Worker, redirects to Stripe, then returns users to Vortx.
         </p>
       </div>
 
