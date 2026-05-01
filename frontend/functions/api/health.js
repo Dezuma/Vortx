@@ -13,7 +13,7 @@ export function onRequestGet({ env }) {
           botAdminToken: has(env.BOT_ADMIN_TOKEN),
           publicSiteUrl: has(env.PUBLIC_SITE_URL),
         },
-        note: 'Stripe Payment Links are compile-time VITE_* values on the static frontend; verify in /pricing.',
+        note: 'Stripe Checkout uses server-side Workers env. Verify checkout from /pricing after STRIPE_SECRET_KEY is set.',
       },
       null,
       2,

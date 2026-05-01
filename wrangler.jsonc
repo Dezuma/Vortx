@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "vortx",
+  "main": "./worker/index.js",
   "compatibility_date": "2026-05-01",
   "observability": {
     "enabled": true
@@ -11,8 +12,20 @@
     "command": "cd frontend && npm ci && npm run build"
   },
   "assets": {
+    "binding": "ASSETS",
     "directory": "./frontend/dist",
     "not_found_handling": "single-page-application"
+  },
+  "vars": {
+    "PUBLIC_SITE_URL": "https://vortx.debaezu.workers.dev",
+    "VITE_SUPABASE_URL": "https://gejjtdrqyahajtijvghb.supabase.co",
+    "VITE_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_jM3OQdwRXyfYoNFbatxx7A_xrRglOuh",
+    "STRIPE_PRODUCT_ID": "prod_TzZv53ND7BGNVx",
+    "STRIPE_NEBULA_PRICE_ID": "price_1T2dlORsNB149jDMOFi1srU3",
+    "STRIPE_SUPERNOVA_PRICE_ID": "price_1T2do0RsNB149jDMqCTT0toh",
+    "STRIPE_GALACTIC_PRICE_ID": "price_1T2dnERsNB149jDMP1oVyzRT",
+    "STRIPE_CUSTOM_PRICE_ID": "price_1T5tBXRsNB149jDMLBCEMKYb",
+    "STRIPE_CUSTOM_MODE": "payment"
   },
   "compatibility_flags": [
     "nodejs_compat"

@@ -26,7 +26,7 @@ See **[STACK.md](./STACK.md)** — **Cloudflare Pages** for the **Vite + Tailwin
 
 ### Deploy with Wrangler
 
-If Cloudflare is using **Deploy command: `npx wrangler deploy`**, keep the repo root as the working directory. `wrangler.jsonc` runs `cd frontend && npm ci && npm run build`, then deploys only `frontend/dist` as assets. Do not set the asset/output directory to raw `frontend/`, or Cloudflare will upload source files instead of the built app.
+If Cloudflare is using **Deploy command: `npx wrangler deploy`**, keep the repo root as the working directory. `wrangler.jsonc` runs `cd frontend && npm ci && npm run build`, deploys `frontend/dist` as assets, and runs `worker/index.js` for `/api/*` routes. Do not set the asset/output directory to raw `frontend/`, or Cloudflare will upload source files instead of the built app.
 
 **Realtime:** In Supabase → **Database → Replication**, add `public.markets` so the app’s `postgres_changes` subscription can invalidate TanStack Query when odds update.
 
