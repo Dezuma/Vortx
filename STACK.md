@@ -18,9 +18,9 @@ A **personal branding site** earns **trust** and **visibility**. It should not b
 
 ## Hosting: Cloudflare Pages
 
-**Cloudflare Pages** fits this repo: connect the Git repo, run **`npm run build`**, publish **`dist`**, set **`VITE_*`** env vars in the Pages project (never in git). Pages Functions in `frontend/functions/` handle bot dry-run checks and health checks—while Supabase stays the source of truth for data and RLS.
+**Cloudflare Pages / Workers** fits this repo: connect the Git repo or run Wrangler, build the Vite app, serve `frontend/dist` as assets, and run `worker/index.js` for `/api/*`. Supabase stays the source of truth for data and RLS.
 
-**SPA routing:** `frontend/public/_redirects` is copied into `dist` by Vite so client-side routes resolve on Pages.
+**SPA routing:** `wrangler.jsonc` sets `assets.not_found_handling = "single-page-application"`, so direct visits to client routes resolve without a `_redirects` file.
 
 ---
 
@@ -29,7 +29,7 @@ A **personal branding site** earns **trust** and **visibility**. It should not b
 | Layer | Choice | Role |
 |--------|--------|------|
 | Frontend | React + **Vite** + **Tailwind** | Fast builds, styling at scale. |
-| Hosting | **Cloudflare Pages** | Global static + SPA fallback; Pages Functions for bot checks and thin edge logic. |
+| Hosting | **Cloudflare Workers + assets** | Global static + SPA fallback; Worker handles API routes and thin edge logic. |
 | Backend / data | **Supabase** | Postgres, **Realtime** for moving odds, **Auth**, **RLS**. Supabase **Edge Functions** for oracle/scraper jobs. |
 | Async / cache | **TanStack Query** | Feeds, odds, invalidation when Supabase realtime updates. |
 | Payments | **Stripe Payment Links** | Fastest safe checkout path; no Stripe secret key in repo or browser. |
@@ -68,4 +68,4 @@ Use Stripe **Checkout Sessions** through the Cloudflare Pages Function for this 
 
 In **Cloudflare Pages**, set **Root directory** (build configuration) to **`frontend`**, build command **`npm run build`**, output directory **`dist`**.
 
-If you deploy with **Wrangler** instead of the Pages build UI, run from the repo root with **`npx wrangler deploy`**. The checked-in `wrangler.jsonc` builds `frontend/` first and deploys **`frontend/dist`** only.
+Deploy from the repo root with **`npx wrangler deploy`**. The checked-in `wrangler.jsonc` builds `frontend/` first, deploys **`frontend/dist`** only, and serves SPA routes through Cloudflare’s asset fallback.

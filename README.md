@@ -8,7 +8,7 @@ See **[STACK.md](./STACK.md)** — **Cloudflare Pages** for the **Vite + Tailwin
 
 | Path | Purpose |
 |------|---------|
-| [STACK.md](./STACK.md) | Cloudflare Pages deploy, Supabase/Stripe envs, bot checks, SPA `_redirects`, brand/funnel/systems framing. |
+| [STACK.md](./STACK.md) | Cloudflare deploy, Supabase/Stripe envs, bot checks, SPA fallback, brand/funnel/systems framing. |
 | [GROWTH.md](./GROWTH.md) | Utility-first distribution (oracle bot, overlays, incentives, paper leagues). |
 | [`frontend/`](./frontend/) | Web app (`npm run dev`). |
 | [`frontend/functions/`](./frontend/functions/) | Cloudflare Pages Functions for health and bot dry-run checks. |
@@ -22,7 +22,7 @@ See **[STACK.md](./STACK.md)** — **Cloudflare Pages** for the **Vite + Tailwin
 3. Build command: **`npm run build`**. Build output directory: **`dist`**.
 4. Under **Settings → Environment variables**, add Supabase, Stripe Payment Link, and bot variables (see `frontend/.env.example`).
 
-`frontend/public/_redirects` is emitted into `dist` so SPA routes work on Pages.
+SPA fallback is handled by `wrangler.jsonc` via `assets.not_found_handling = "single-page-application"`.
 
 ### Deploy with Wrangler
 
