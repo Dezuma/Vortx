@@ -53,6 +53,14 @@ export function PricingPlans() {
                 </li>
               ))}
             </ul>
+            <div className="mt-4 rounded-lg bg-neutral-50 p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">Not included</p>
+              <ul className="mt-2 space-y-1 text-xs text-muted">
+                {plan.locked.map((feature) => (
+                  <li key={feature}>− {feature}</li>
+                ))}
+              </ul>
+            </div>
             <button
               type="button"
               onClick={() => void onCheckout(plan.id)}

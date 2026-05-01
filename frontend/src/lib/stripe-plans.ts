@@ -6,6 +6,7 @@ export type PricingPlan = {
   description: string
   bestFor: string
   features: string[]
+  locked: string[]
   priceEnvKey: string
 }
 
@@ -15,9 +16,10 @@ export const pricingPlans: PricingPlan[] = [
     name: 'Nebula',
     price: '$9.99',
     cadence: 'per month',
-    description: 'Starter access for early users and paper-trading spectators.',
-    bestFor: 'Follow markets, widgets, and public oracle posts.',
-    features: ['Watchlist-ready market UI', 'Newsletter widget previews', 'Public oracle feed access'],
+    description: 'For people who want to follow the odds without trading real money yet.',
+    bestFor: 'Casual predictors and waitlist members.',
+    features: ['Save a watchlist', 'Read public market pages', 'Join paper league drops'],
+    locked: ['No creator widgets', 'No alert feed', 'No team/API access'],
     priceEnvKey: 'STRIPE_NEBULA_PRICE_ID',
   },
   {
@@ -25,9 +27,10 @@ export const pricingPlans: PricingPlan[] = [
     name: 'Supernova',
     price: '$19.99',
     cadence: 'per month',
-    description: 'Pro tier for active analysts who want faster market discovery.',
-    bestFor: 'Analysts, finance creators, and newsletter operators.',
-    features: ['Everything in Nebula', 'Pro widget positioning', 'Priority beta access to oracle alerts'],
+    description: 'For analysts and creators who want odds in front of their audience.',
+    bestFor: 'Newsletter writers and market commentators.',
+    features: ['Everything in Nebula', 'Creator widget kit', 'Priority oracle alert beta'],
+    locked: ['No partner pilot support', 'No team/API previews'],
     priceEnvKey: 'STRIPE_SUPERNOVA_PRICE_ID',
   },
   {
@@ -35,9 +38,10 @@ export const pricingPlans: PricingPlan[] = [
     name: 'Galactic',
     price: '$49.99',
     cadence: 'per month',
-    description: 'Enterprise-style early access for teams testing Vortx workflows.',
-    bestFor: 'Small teams, research desks, and partner pilots.',
-    features: ['Everything in Supernova', 'Partner pilot support', 'Early API / bot workflow previews'],
+    description: 'For teams using Vortx as a signal, content, or research layer.',
+    bestFor: 'Research desks, operators, and partner pilots.',
+    features: ['Everything in Supernova', 'Partner pilot support', 'Early API + bot workflow previews'],
+    locked: ['Custom markets and services quoted separately'],
     priceEnvKey: 'STRIPE_GALACTIC_PRICE_ID',
   },
   {
@@ -45,9 +49,10 @@ export const pricingPlans: PricingPlan[] = [
     name: 'Prediction price',
     price: 'You choose',
     cadence: 'one-time or recurring',
-    description: 'Flexible payment link for pilots, deposits, or custom consulting packages.',
-    bestFor: 'Custom onboarding and manual deals.',
-    features: ['Customer chooses amount', 'Use for pilots or deposits', 'Manual follow-up from the funnel'],
+    description: 'For custom markets, consulting, sponsorships, or private pilots.',
+    bestFor: 'Bespoke launches and partner deals.',
+    features: ['Custom amount', 'Manual onboarding', 'Private follow-up'],
+    locked: ['Scoped manually before delivery'],
     priceEnvKey: 'STRIPE_CUSTOM_PRICE_ID',
   },
 ]

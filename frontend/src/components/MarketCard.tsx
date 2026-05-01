@@ -59,7 +59,7 @@ export function MarketCard({ market, compact }: Props) {
           </div>
           <div className="mt-1.5 flex justify-between font-mono text-xs tabular-nums text-muted">
             <span>
-              YES <strong className="text-emerald-700">{formatYesCents(yes)}</strong>
+              YES chance <strong className="text-emerald-700">{formatYesCents(yes)}</strong>
             </span>
             <span>
               NO <strong className="text-red-700">{formatNoFromYes(yes)}</strong>

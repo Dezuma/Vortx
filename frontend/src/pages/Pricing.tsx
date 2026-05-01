@@ -6,8 +6,8 @@ export function Pricing() {
       <div>
         <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Pricing</h1>
         <p className="mt-2 max-w-2xl text-sm text-muted">
-          Stripe Checkout Sessions are created by the Cloudflare Worker. Price IDs are configured as Worker vars and the
-          Stripe secret key stays server-only.
+          Start free with public markets and the waitlist. Paid tiers unlock clearer distribution, faster alerts, and
+          partner support as the product opens up.
         </p>
       </div>
       <PricingPlans />

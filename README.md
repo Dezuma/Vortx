@@ -34,6 +34,8 @@ If Cloudflare is using **Deploy command: `npx wrangler deploy`**, keep the repo 
 
 **Worker writes:** Set `SUPABASE_SERVICE_ROLE_KEY` as a Cloudflare secret so `/api/waitlist` can upsert leads and checkout can optionally write `checkout_sessions`. Keep it server-only.
 
+**Auth:** In Supabase → **Authentication → Providers**, enable **Email**. Add your deployed URL under **Authentication → URL Configuration → Site URL** so email confirmations return to Vortx.
+
 **Payments:** Stripe Checkout Sessions are created by `frontend/functions/api/stripe-checkout.js`. Add `STRIPE_SECRET_KEY` plus the Price IDs below to Cloudflare Pages. Do not put `STRIPE_SECRET_KEY` in `VITE_*` variables or source code.
 
 ```bash

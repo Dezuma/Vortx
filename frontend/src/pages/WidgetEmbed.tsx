@@ -12,9 +12,10 @@ export function WidgetEmbed() {
   const [params] = useSearchParams()
   const compact = params.get('compact') === '1' || params.get('layout') === 'strip'
 
-  const title = params.get('title')?.trim() || 'Demo contract'
-  const yesRaw = Number(params.get('yes'))
-  const yes = Number.isFinite(yesRaw) ? clampPct(yesRaw) / 100 : 0.62
+  const title = params.get('title')?.trim() || DEMO_MARKETS[0]?.title || 'Demo market'
+  const yesParam = params.get('yes')
+  const yesRaw = yesParam == null ? Number.NaN : Number(yesParam)
+  const yes = Number.isFinite(yesRaw) ? clampPct(yesRaw) / 100 : (DEMO_MARKETS[0]?.yes_price ?? 0.62)
   const slug = params.get('slug')?.trim() || DEMO_MARKETS[0]?.slug || 'fed-cut-q3'
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
 
@@ -39,9 +40,9 @@ export function WidgetEmbed() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Newsletter widget</h1>
         <p className="mt-2 text-sm text-muted">
-          Compact iframe view: add <code className="font-mono text-xs">?compact=1</code>. Optional{' '}
-          <code className="font-mono text-xs">title</code>, <code className="font-mono text-xs">yes</code> (0–100),{' '}
-          <code className="font-mono text-xs">slug</code> for deep links.
+          A small share card for newsletters and blogs. Add <code className="font-mono text-xs">?compact=1</code> for
+          iframe mode. Optional: <code className="font-mono text-xs">title</code>,{' '}
+          <code className="font-mono text-xs">yes</code> (0–100), and <code className="font-mono text-xs">slug</code>.
         </p>
       </div>
 

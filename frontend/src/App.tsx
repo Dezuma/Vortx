@@ -1,5 +1,7 @@
 import { Link, Route, Routes } from 'react-router-dom'
+import { AuthStatus } from './components/AuthStatus'
 import { useMarketsRealtime } from './hooks/useMarketsRealtime'
+import { Auth } from './pages/Auth'
 import { Bots } from './pages/Bots'
 import { Home } from './pages/Home'
 import { MarketDetail } from './pages/MarketDetail'
@@ -34,6 +36,7 @@ function Layout() {
               Widget
             </Link>
           </nav>
+          <AuthStatus />
         </div>
       </header>
       <main className="mx-auto w-full max-w-5xl flex-1 px-5 py-10">
@@ -44,10 +47,11 @@ function Layout() {
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/bots" element={<Bots />} />
           <Route path="/widget" element={<WidgetEmbed />} />
+          <Route path="/auth" element={<Auth />} />
         </Routes>
       </main>
       <footer className="border-t border-line px-5 py-6 text-center text-xs text-muted">
-        Cloudflare Workers + assets · Supabase RLS · Stripe Checkout
+        Vortx: simple yes/no markets backed by sources, accounts, and Stripe checkout.
       </footer>
     </div>
   )

@@ -77,7 +77,7 @@ export function MarketDetail() {
       </header>
 
       <div className="rounded-2xl border border-line bg-surface-elevated p-6 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted">Implied probability</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted">Current yes/no price</p>
         <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
           <div className="font-mono text-4xl font-semibold tabular-nums tracking-tight">
             <span className="text-emerald-600">{formatYesCents(yes)}</span>
@@ -102,7 +102,7 @@ export function MarketDetail() {
       </div>
 
       <section className="rounded-xl border border-dashed border-line bg-surface p-4 text-sm text-muted">
-        <strong className="text-ink">Oracle CTA:</strong>{' '}
+        <strong className="text-ink">Share line:</strong>{' '}
         <span className="italic">
           Probability from Vortx — trade this outcome:{' '}
           {typeof window !== 'undefined' ? `${window.location.origin}/m/${m.slug ?? m.id}` : ''}

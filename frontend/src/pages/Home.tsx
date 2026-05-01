@@ -9,11 +9,11 @@ export function Home() {
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Vortx</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight text-balance md:text-4xl">
-            News → probability → markets
+            Pick yes or no on tomorrow’s business headlines.
           </h1>
           <p className="mt-4 max-w-xl text-muted">
-            A public oracle layer for business news: Vortx turns visible events into transparent probabilities, then
-            routes serious users into markets, widgets, and paid intelligence.
+            Vortx turns major news questions into simple odds. If you think the chance is wrong, you follow the market,
+            share it, or join the paper league before real-money trading is ready.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
@@ -37,12 +37,12 @@ export function Home() {
           </div>
         </div>
         <div className="rounded-xl border border-line bg-surface-elevated p-5 text-sm">
-          <p className="font-semibold text-ink">Operating loop</p>
+          <p className="font-semibold text-ink">How it works</p>
           <ol className="mt-3 list-decimal space-y-2 pl-4 text-muted">
-            <li>Publish probability with a source</li>
-            <li>Route readers to a market page</li>
-            <li>Capture email or checkout intent</li>
-            <li>Follow up through Supabase-backed systems</li>
+            <li>Read the question</li>
+            <li>See the YES and NO prices</li>
+            <li>Decide if the crowd is too high or too low</li>
+            <li>Save your spot for paid access and league drops</li>
           </ol>
         </div>
       </section>
