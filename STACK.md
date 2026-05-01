@@ -20,7 +20,7 @@ A **personal branding site** earns **trust** and **visibility**. It should not b
 
 **Cloudflare Pages** fits this repo: connect the Git repo, run **`npm run build`**, publish **`dist`**, set **`VITE_*`** env vars in the Pages project (never in git). Pages Functions in `frontend/functions/` handle bot dry-run checks and health checks—while Supabase stays the source of truth for data and RLS.
 
-**SPA routing:** `vortx/frontend/public/_redirects` is copied into `dist` by Vite so client-side routes resolve on Pages.
+**SPA routing:** `frontend/public/_redirects` is copied into `dist` by Vite so client-side routes resolve on Pages.
 
 ---
 
@@ -44,7 +44,7 @@ GitHub Pages is ideal for **static** repos. For **auth**, **RLS-backed writes**,
 
 ## Environment variables
 
-Set in **Cloudflare Pages** → your project → **Settings → Environment variables** (and mirror in `vortx/frontend/.env.local` for dev):
+Set in **Cloudflare Pages** → your project → **Settings → Environment variables** (and mirror in `frontend/.env.local` for dev):
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_PUBLISHABLE_KEY` (or `VITE_SUPABASE_ANON_KEY` if you use that name)
@@ -63,4 +63,6 @@ Use Stripe **Payment Links** for this iteration. If you later need metered billi
 
 ## Monorepo deploy
 
-In **Cloudflare Pages**, set **Root directory** (build configuration) to **`vortx/frontend`**, build command **`npm run build`**, output directory **`dist`**.
+In **Cloudflare Pages**, set **Root directory** (build configuration) to **`frontend`**, build command **`npm run build`**, output directory **`dist`**.
+
+If you deploy with **Wrangler** instead of the Pages build UI, run from the repo root with **`npx wrangler deploy`**. The checked-in `wrangler.jsonc` builds `frontend/` first and deploys **`frontend/dist`** only.

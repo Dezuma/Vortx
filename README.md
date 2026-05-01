@@ -13,17 +13,24 @@ See **[STACK.md](./STACK.md)** — **Cloudflare Pages** for the **Vite + Tailwin
 | [`frontend/`](./frontend/) | Web app (`npm run dev`). |
 | [`frontend/functions/`](./frontend/functions/) | Cloudflare Pages Functions for health and bot dry-run checks. |
 | [`supabase/schema.sql`](./supabase/schema.sql) | Starter SQL (apply in Supabase). |
+| [`supabase/seed.sql`](./supabase/seed.sql) | Rerunnable demo-market seed data. |
 
 ### Deploy on Cloudflare Pages
 
 1. In the [Cloudflare dashboard](https://dash.cloudflare.com/) → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**.
-2. Select this repository and set **Root directory** to **`vortx/frontend`**.
+2. Select this repository and set **Root directory** to **`frontend`**.
 3. Build command: **`npm run build`**. Build output directory: **`dist`**.
 4. Under **Settings → Environment variables**, add Supabase, Stripe Payment Link, and bot variables (see `frontend/.env.example`).
 
 `frontend/public/_redirects` is emitted into `dist` so SPA routes work on Pages.
 
+### Deploy with Wrangler
+
+If Cloudflare is using **Deploy command: `npx wrangler deploy`**, keep the repo root as the working directory. `wrangler.jsonc` runs `cd frontend && npm ci && npm run build`, then deploys only `frontend/dist` as assets. Do not set the asset/output directory to raw `frontend/`, or Cloudflare will upload source files instead of the built app.
+
 **Realtime:** In Supabase → **Database → Replication**, add `public.markets` so the app’s `postgres_changes` subscription can invalidate TanStack Query when odds update.
+
+**Seed data:** Run `supabase/seed.sql` after the schema. It uses `on conflict (slug) do update`, so rerunning it will not fail with duplicate slug errors.
 
 **Payments:** In Stripe, create Payment Links for the Nebula, Supernova, Galactic, and customer-choice prices. Add the resulting `https://buy.stripe.com/...` URLs as `VITE_STRIPE_*_PAYMENT_LINK_URL` values in Cloudflare Pages. The app never needs `STRIPE_SECRET_KEY` for this first checkout iteration.
 
@@ -32,7 +39,7 @@ See **[STACK.md](./STACK.md)** — **Cloudflare Pages** for the **Vite + Tailwin
 ### Local development
 
 ```bash
-cd vortx/frontend
+cd frontend
 cp .env.example .env.local   # add Supabase URL + publishable key
 npm install
 npm run dev
