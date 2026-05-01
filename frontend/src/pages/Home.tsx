@@ -7,13 +7,14 @@ export function Home() {
     <div className="flex flex-col gap-12">
       <section className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-start">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Vortx</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Truth-as-a-Service</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight text-balance md:text-4xl">
-            Pick yes or no on tomorrow’s business headlines.
+            Bet your brain on tomorrow’s headlines.
           </h1>
           <p className="mt-4 max-w-xl text-muted">
-            Vortx turns major news questions into simple odds. If you think the chance is wrong, you follow the market,
-            share it, or join the paper league before real-money trading is ready.
+            Vortx turns messy news into one simple question: <strong className="font-medium text-ink">yes or no?</strong>{' '}
+            Follow the crowd price, compete in paper markets, and graduate into paid tools for creators, market makers,
+            and teams.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
@@ -39,12 +40,26 @@ export function Home() {
         <div className="rounded-xl border border-line bg-surface-elevated p-5 text-sm">
           <p className="font-semibold text-ink">How it works</p>
           <ol className="mt-3 list-decimal space-y-2 pl-4 text-muted">
-            <li>Read the question</li>
-            <li>See the YES and NO prices</li>
-            <li>Decide if the crowd is too high or too low</li>
-            <li>Save your spot for paid access and league drops</li>
+            <li>News becomes a yes/no market</li>
+            <li>The YES price shows the crowd’s chance</li>
+            <li>You decide if the crowd is wrong</li>
+            <li>Your accuracy builds status before real trading opens</li>
           </ol>
         </div>
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {[
+          ['Oracle Bot', 'Posts probability, not opinion, with a link back to the market.'],
+          ['Vortx Bubble', 'Embeds live odds where people already read news and tickers.'],
+          ['Liquidity Heatmap', 'Shows where early users can help markets become useful.'],
+          ['Prestige League', 'Ranks paper traders so winners earn status before money goes live.'],
+        ].map(([title, body]) => (
+          <article key={title} className="rounded-xl border border-line bg-surface-elevated p-4">
+            <h2 className="font-semibold text-ink">{title}</h2>
+            <p className="mt-2 text-sm text-muted">{body}</p>
+          </article>
+        ))}
       </section>
 
       <WaitlistStrip />

@@ -6,14 +6,14 @@ export function Pricing() {
       <div>
         <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Pricing</h1>
         <p className="mt-2 max-w-2xl text-sm text-muted">
-          Start free with public markets and the waitlist. Paid tiers unlock clearer distribution, faster alerts, and
-          partner support as the product opens up.
+          Vortx is not priced like generic software. Each tier buys a clearer seat in the prediction-market flywheel:
+          play the news game, publish odds to an audience, help seed liquidity, or build a private partner workflow.
         </p>
       </div>
       <PricingPlans />
       <section className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
-        <strong>Production check:</strong> test with Stripe test-mode price IDs and secret first, verify success/cancel
-        behavior, then switch Cloudflare secrets to live Stripe credentials.
+        <strong>Plain English:</strong> public markets stay readable. Paid plans decide what you can do next: compete,
+        embed, request markets, or work directly with the Vortx team.
       </section>
     </div>
   )

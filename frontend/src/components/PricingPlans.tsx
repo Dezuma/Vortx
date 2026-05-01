@@ -21,11 +21,11 @@ export function PricingPlans() {
     <section className="rounded-xl border border-line bg-surface-elevated p-5 md:p-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Stripe checkout</p>
-          <h2 className="mt-1 text-2xl font-semibold tracking-tight">Memberships and pilots</h2>
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Choose your role</p>
+          <h2 className="mt-1 text-2xl font-semibold tracking-tight">From player to market maker</h2>
         </div>
         <p className="max-w-sm text-sm text-muted">
-          Checkout starts on the Worker, redirects to Stripe, then returns users to Vortx.
+          Every tier maps to a job in the Vortx flywheel: play, publish, recruit liquidity, or build a partner desk.
         </p>
       </div>
 
@@ -37,6 +37,7 @@ export function PricingPlans() {
         {pricingPlans.map((plan) => (
           <article key={plan.id} className="flex flex-col rounded-xl border border-line bg-surface p-4">
             <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-accent">{plan.label}</p>
               <h3 className="font-semibold text-ink">{plan.name}</h3>
               <p className="mt-1 text-sm text-muted">{plan.description}</p>
               <p className="mt-4 font-mono text-2xl font-semibold tabular-nums">

@@ -1,6 +1,7 @@
 export type PricingPlan = {
   id: 'nebula' | 'supernova' | 'galactic' | 'custom'
   name: string
+  label: string
   price: string
   cadence: string
   description: string
@@ -13,46 +14,50 @@ export type PricingPlan = {
 export const pricingPlans: PricingPlan[] = [
   {
     id: 'nebula',
-    name: 'Nebula',
+    name: 'Player',
+    label: 'Nebula',
     price: '$9.99',
     cadence: 'per month',
-    description: 'For people who want to follow the odds without trading real money yet.',
-    bestFor: 'Casual predictors and waitlist members.',
-    features: ['Save a watchlist', 'Read public market pages', 'Join paper league drops'],
-    locked: ['No creator widgets', 'No alert feed', 'No team/API access'],
+    description: 'For people who want to play the news game before real-money markets open.',
+    bestFor: 'Casual predictors, paper traders, and leaderboard climbers.',
+    features: ['Paper trading league access', 'Personal watchlist', 'Basic market history', 'Founder badge eligibility'],
+    locked: ['No embed widgets', 'No market-maker rewards', 'No API or team workspace'],
     priceEnvKey: 'STRIPE_NEBULA_PRICE_ID',
   },
   {
     id: 'supernova',
-    name: 'Supernova',
+    name: 'Creator',
+    label: 'Supernova',
     price: '$19.99',
     cadence: 'per month',
-    description: 'For analysts and creators who want odds in front of their audience.',
-    bestFor: 'Newsletter writers and market commentators.',
-    features: ['Everything in Nebula', 'Creator widget kit', 'Priority oracle alert beta'],
-    locked: ['No partner pilot support', 'No team/API previews'],
+    description: 'For writers, streamers, and analysts who want live odds inside their content.',
+    bestFor: 'Newsletter writers, market commentators, and finance creators.',
+    features: ['Everything in Player', 'Embeddable live-odds widget', 'Referral tags for shared markets', 'Priority oracle alerts'],
+    locked: ['No liquidity rewards', 'No private market requests', 'No API workspace'],
     priceEnvKey: 'STRIPE_SUPERNOVA_PRICE_ID',
   },
   {
     id: 'galactic',
-    name: 'Galactic',
+    name: 'Market Maker',
+    label: 'Galactic',
     price: '$49.99',
     cadence: 'per month',
-    description: 'For teams using Vortx as a signal, content, or research layer.',
-    bestFor: 'Research desks, operators, and partner pilots.',
-    features: ['Everything in Supernova', 'Partner pilot support', 'Early API + bot workflow previews'],
-    locked: ['Custom markets and services quoted separately'],
+    description: 'For power users who want to create markets, recruit flow, and earn status.',
+    bestFor: 'Community builders, data traders, and early liquidity partners.',
+    features: ['Everything in Creator', 'Market request priority', 'Liquidity heatmap beta', 'Fee-share/reward waitlist'],
+    locked: ['No private desk onboarding', 'No white-label or enterprise support'],
     priceEnvKey: 'STRIPE_GALACTIC_PRICE_ID',
   },
   {
     id: 'custom',
-    name: 'Prediction price',
+    name: 'Desk',
+    label: 'Custom',
     price: 'You choose',
     cadence: 'one-time or recurring',
-    description: 'For custom markets, consulting, sponsorships, or private pilots.',
-    bestFor: 'Bespoke launches and partner deals.',
-    features: ['Custom amount', 'Manual onboarding', 'Private follow-up'],
-    locked: ['Scoped manually before delivery'],
+    description: 'For teams that want Vortx odds, widgets, or oracle workflows around a specific vertical.',
+    bestFor: 'Research desks, sponsors, funds, and partner pilots.',
+    features: ['Private onboarding', 'Custom market pack', 'Widget/API pilot scope', 'Manual partner follow-up'],
+    locked: ['Requires approval and a scoped pilot plan'],
     priceEnvKey: 'STRIPE_CUSTOM_PRICE_ID',
   },
 ]

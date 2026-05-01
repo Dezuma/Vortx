@@ -38,11 +38,12 @@ export function WidgetEmbed() {
   return (
     <div className="mx-auto max-w-lg space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Newsletter widget</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Live odds widget</h1>
         <p className="mt-2 text-sm text-muted">
-          A small share card for newsletters and blogs. Add <code className="font-mono text-xs">?compact=1</code> for
-          iframe mode. Optional: <code className="font-mono text-xs">title</code>,{' '}
-          <code className="font-mono text-xs">yes</code> (0–100), and <code className="font-mono text-xs">slug</code>.
+          Put a market inside a newsletter, blog, or creator page. Readers see the crowd price, then click through to
+          Vortx. Add <code className="font-mono text-xs">?compact=1</code> for iframe mode. Optional:{' '}
+          <code className="font-mono text-xs">title</code>, <code className="font-mono text-xs">yes</code> (0–100), and{' '}
+          <code className="font-mono text-xs">slug</code>.
         </p>
       </div>
 
