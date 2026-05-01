@@ -85,10 +85,10 @@ export function MarketDetail() {
             <span className="text-red-600">{formatNoFromYes(yes)}</span>
           </div>
           <Link
-            to="/widget"
+            to="/pricing"
             className="rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-white no-underline hover:bg-neutral-800"
           >
-            Share embed
+            Upgrade
           </Link>
         </div>
         <div className="mt-6 flex h-3 overflow-hidden rounded-full bg-neutral-100">

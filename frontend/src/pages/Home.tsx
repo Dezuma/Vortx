@@ -28,6 +28,12 @@ export function Home() {
             >
               Newsletter embed
             </Link>
+            <Link
+              to="/pricing"
+              className="inline-flex items-center justify-center rounded-full border border-line bg-surface-elevated px-5 py-2.5 text-sm font-semibold text-ink no-underline hover:border-neutral-400"
+            >
+              Pricing
+            </Link>
           </div>
         </div>
         <div className="rounded-xl border border-line bg-surface-elevated p-5 text-sm">
@@ -54,6 +60,9 @@ export function Home() {
           Probability from Vortx — trade this outcome:{' '}
           {typeof window !== 'undefined' ? `${window.location.origin}/m/fed-cut-q3` : ''}
         </span>
+        <Link to="/bots" className="mt-3 block font-semibold text-accent no-underline hover:underline">
+          Test the dry-run bot endpoint →
+        </Link>
       </section>
     </div>
   )

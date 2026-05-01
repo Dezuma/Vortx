@@ -1,8 +1,10 @@
 import { Link, Route, Routes } from 'react-router-dom'
 import { useMarketsRealtime } from './hooks/useMarketsRealtime'
+import { Bots } from './pages/Bots'
 import { Home } from './pages/Home'
 import { MarketDetail } from './pages/MarketDetail'
 import { Markets } from './pages/Markets'
+import { Pricing } from './pages/Pricing'
 import { WidgetEmbed } from './pages/WidgetEmbed'
 
 function Layout() {
@@ -22,6 +24,12 @@ function Layout() {
             <Link to="/markets" className="text-accent no-underline hover:underline">
               Markets
             </Link>
+            <Link to="/pricing" className="text-accent no-underline hover:underline">
+              Pricing
+            </Link>
+            <Link to="/bots" className="text-accent no-underline hover:underline">
+              Bots
+            </Link>
             <Link to="/widget" className="text-accent no-underline hover:underline">
               Widget
             </Link>
@@ -33,6 +41,8 @@ function Layout() {
           <Route path="/" element={<Home />} />
           <Route path="/markets" element={<Markets />} />
           <Route path="/m/:slugOrId" element={<MarketDetail />} />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/bots" element={<Bots />} />
           <Route path="/widget" element={<WidgetEmbed />} />
         </Routes>
       </main>

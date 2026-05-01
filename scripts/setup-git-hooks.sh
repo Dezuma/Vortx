@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run once after clone: points this repo at .githooks (blocks Cursor attribution trailers).
+# Run once after clone: points this repo at .githooks (blocks IDE attribution trailers).
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$root"
