@@ -1,9 +1,3 @@
-type PlanEnvKey =
-  | 'VITE_STRIPE_NEBULA_PAYMENT_LINK_URL'
-  | 'VITE_STRIPE_SUPERNOVA_PAYMENT_LINK_URL'
-  | 'VITE_STRIPE_GALACTIC_PAYMENT_LINK_URL'
-  | 'VITE_STRIPE_CUSTOM_PAYMENT_LINK_URL'
-
 export type PricingPlan = {
   id: 'nebula' | 'supernova' | 'galactic' | 'custom'
   name: string
@@ -12,21 +6,7 @@ export type PricingPlan = {
   description: string
   bestFor: string
   features: string[]
-  envKey: PlanEnvKey
-  paymentLink: string | null
-}
-
-function cleanPaymentLink(value: string | undefined): string | null {
-  const trimmed = value?.trim()
-  if (!trimmed) return null
-
-  try {
-    const url = new URL(trimmed)
-    if (url.protocol !== 'https:') return null
-    return url.toString()
-  } catch {
-    return null
-  }
+  priceEnvKey: string
 }
 
 export const pricingPlans: PricingPlan[] = [
@@ -38,8 +18,7 @@ export const pricingPlans: PricingPlan[] = [
     description: 'Starter access for early users and paper-trading spectators.',
     bestFor: 'Follow markets, widgets, and public oracle posts.',
     features: ['Watchlist-ready market UI', 'Newsletter widget previews', 'Public oracle feed access'],
-    envKey: 'VITE_STRIPE_NEBULA_PAYMENT_LINK_URL',
-    paymentLink: cleanPaymentLink(import.meta.env.VITE_STRIPE_NEBULA_PAYMENT_LINK_URL),
+    priceEnvKey: 'STRIPE_NEBULA_PRICE_ID',
   },
   {
     id: 'supernova',
@@ -49,8 +28,7 @@ export const pricingPlans: PricingPlan[] = [
     description: 'Pro tier for active analysts who want faster market discovery.',
     bestFor: 'Analysts, finance creators, and newsletter operators.',
     features: ['Everything in Nebula', 'Pro widget positioning', 'Priority beta access to oracle alerts'],
-    envKey: 'VITE_STRIPE_SUPERNOVA_PAYMENT_LINK_URL',
-    paymentLink: cleanPaymentLink(import.meta.env.VITE_STRIPE_SUPERNOVA_PAYMENT_LINK_URL),
+    priceEnvKey: 'STRIPE_SUPERNOVA_PRICE_ID',
   },
   {
     id: 'galactic',
@@ -60,8 +38,7 @@ export const pricingPlans: PricingPlan[] = [
     description: 'Enterprise-style early access for teams testing Vortx workflows.',
     bestFor: 'Small teams, research desks, and partner pilots.',
     features: ['Everything in Supernova', 'Partner pilot support', 'Early API / bot workflow previews'],
-    envKey: 'VITE_STRIPE_GALACTIC_PAYMENT_LINK_URL',
-    paymentLink: cleanPaymentLink(import.meta.env.VITE_STRIPE_GALACTIC_PAYMENT_LINK_URL),
+    priceEnvKey: 'STRIPE_GALACTIC_PRICE_ID',
   },
   {
     id: 'custom',
@@ -71,9 +48,6 @@ export const pricingPlans: PricingPlan[] = [
     description: 'Flexible payment link for pilots, deposits, or custom consulting packages.',
     bestFor: 'Custom onboarding and manual deals.',
     features: ['Customer chooses amount', 'Use for pilots or deposits', 'Manual follow-up from the funnel'],
-    envKey: 'VITE_STRIPE_CUSTOM_PAYMENT_LINK_URL',
-    paymentLink: cleanPaymentLink(import.meta.env.VITE_STRIPE_CUSTOM_PAYMENT_LINK_URL),
+    priceEnvKey: 'STRIPE_CUSTOM_PRICE_ID',
   },
 ]
-
-export const hasAnyStripePaymentLink = pricingPlans.some((plan) => Boolean(plan.paymentLink))

@@ -48,16 +48,19 @@ Set in **Cloudflare Pages** → your project → **Settings → Environment vari
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_PUBLISHABLE_KEY` (or `VITE_SUPABASE_ANON_KEY` if you use that name)
-- `VITE_STRIPE_NEBULA_PAYMENT_LINK_URL`
-- `VITE_STRIPE_SUPERNOVA_PAYMENT_LINK_URL`
-- `VITE_STRIPE_GALACTIC_PAYMENT_LINK_URL`
-- `VITE_STRIPE_CUSTOM_PAYMENT_LINK_URL`
+- `STRIPE_PRODUCT_ID`
+- `STRIPE_NEBULA_PRICE_ID`
+- `STRIPE_SUPERNOVA_PRICE_ID`
+- `STRIPE_GALACTIC_PRICE_ID`
+- `STRIPE_CUSTOM_PRICE_ID`
+- `STRIPE_CUSTOM_MODE`
+- `STRIPE_SECRET_KEY` (server-only; never prefix with `VITE_`)
 - `BOT_ADMIN_TOKEN` (Cloudflare Function secret, not `VITE_*`)
 - `PUBLIC_SITE_URL` (optional, used by bot post links)
 
 Never commit real keys. Rotate if credentials are ever exposed.
 
-Use Stripe **Payment Links** for this iteration. If you later need metered billing, webhooks, coupons, or customer portal flows, add a Cloudflare Worker/Pages Function backed by `STRIPE_SECRET_KEY`.
+Use Stripe **Checkout Sessions** through the Cloudflare Pages Function for this iteration. If you later need metered billing, webhooks, coupons, or customer portal flows, add webhook verification and a customer portal endpoint.
 
 ---
 

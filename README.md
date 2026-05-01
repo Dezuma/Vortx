@@ -32,7 +32,17 @@ If Cloudflare is using **Deploy command: `npx wrangler deploy`**, keep the repo 
 
 **Seed data:** Run `supabase/seed.sql` after the schema. It uses `on conflict (slug) do update`, so rerunning it will not fail with duplicate slug errors.
 
-**Payments:** In Stripe, create Payment Links for the Nebula, Supernova, Galactic, and customer-choice prices. Add the resulting `https://buy.stripe.com/...` URLs as `VITE_STRIPE_*_PAYMENT_LINK_URL` values in Cloudflare Pages. The app never needs `STRIPE_SECRET_KEY` for this first checkout iteration.
+**Payments:** Stripe Checkout Sessions are created by `frontend/functions/api/stripe-checkout.js`. Add `STRIPE_SECRET_KEY` plus the Price IDs below to Cloudflare Pages. Do not put `STRIPE_SECRET_KEY` in `VITE_*` variables or source code.
+
+```bash
+STRIPE_PRODUCT_ID=prod_TzZv53ND7BGNVx
+STRIPE_NEBULA_PRICE_ID=price_1T2dlORsNB149jDMOFi1srU3
+STRIPE_SUPERNOVA_PRICE_ID=price_1T2do0RsNB149jDMqCTT0toh
+STRIPE_GALACTIC_PRICE_ID=price_1T2dnERsNB149jDMP1oVyzRT
+STRIPE_CUSTOM_PRICE_ID=price_1T5tBXRsNB149jDMLBCEMKYb
+STRIPE_CUSTOM_MODE=payment
+STRIPE_SECRET_KEY=<your Stripe secret key from dashboard>
+```
 
 **Bots:** After deploy, visit `/api/oracle-bot?event=Fed%20cuts%20before%20Oct%201&probability=42&market=fed-cut-q3&dryRun=1`. Set `BOT_ADMIN_TOKEN` in Cloudflare Pages to require `Authorization: Bearer <token>` for the endpoint. Live posting intentionally returns `501` until you add an X/Farcaster adapter.
 
