@@ -13,7 +13,7 @@ See **[STACK.md](./STACK.md)** — **Cloudflare Pages** for the **Vite + Tailwin
 | [`frontend/`](./frontend/) | Web app (`npm run dev`). |
 | [`frontend/functions/`](./frontend/functions/) | Cloudflare Pages Functions for health and bot dry-run checks. |
 | [`supabase/schema.sql`](./supabase/schema.sql) | Starter SQL (apply in Supabase). |
-| [`supabase/seed.sql`](./supabase/seed.sql) | Rerunnable demo-market seed data. |
+| [`supabase/seed.sql`](./supabase/seed.sql) | Rerunnable initial market seed data. |
 
 ### Deploy on Cloudflare Pages
 

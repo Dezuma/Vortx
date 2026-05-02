@@ -1,7 +1,5 @@
-import { Link } from 'react-router-dom'
 import { useMarkets } from '../hooks/useMarkets'
 import { supabase } from '../lib/supabase'
-import { DEMO_MARKETS } from '../data/demo-markets'
 import { MarketCard } from './MarketCard'
 
 function SkeletonCard() {
@@ -25,8 +23,7 @@ type Props = {
 export function MarketsGrid({ title = 'Markets', subtitle, compact }: Props) {
   const hasDb = Boolean(supabase)
   const { data, isPending, isError, error, refetch } = useMarkets()
-  const rows = hasDb ? (data ?? []) : DEMO_MARKETS
-  const showDemoRibbon = !hasDb
+  const rows = data ?? []
 
   return (
     <section className="rounded-xl border border-line bg-surface-elevated p-5 md:p-6">
@@ -43,21 +40,13 @@ export function MarketsGrid({ title = 'Markets', subtitle, compact }: Props) {
           >
             Refresh
           </button>
-        ) : (
-          <Link
-            to="/widget"
-            className="self-start text-xs font-semibold text-accent no-underline hover:underline"
-          >
-            Embed widget →
-          </Link>
-        )}
+        ) : null}
       </div>
 
-      {showDemoRibbon ? (
-        <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
-          <strong>Demo data</strong> — add <code className="font-mono">VITE_SUPABASE_*</code> in Cloudflare Pages to
-          load live rows (and enable Realtime on <code className="font-mono">public.markets</code> for instant
-          updates).
+      {!hasDb ? (
+        <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">
+          Supabase is not configured for this build. Add <code className="font-mono">VITE_SUPABASE_URL</code> and a
+          publishable key in Cloudflare, then redeploy.
         </p>
       ) : null}
 
@@ -83,10 +72,9 @@ export function MarketsGrid({ title = 'Markets', subtitle, compact }: Props) {
           <SkeletonCard />
           <SkeletonCard />
         </div>
-      ) : rows.length === 0 ? (
+      ) : !hasDb ? null : rows.length === 0 ? (
         <p className="mt-6 text-sm text-muted">
-          No markets yet — run <code className="font-mono text-xs">vortx/supabase/schema.sql</code> and insert rows,
-          or open a market from the oracle funnel.
+          No live markets yet. Add rows to <code className="font-mono text-xs">public.markets</code> in Supabase.
         </p>
       ) : (
         <div

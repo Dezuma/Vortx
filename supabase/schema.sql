@@ -183,4 +183,74 @@ create policy "market_events_select_public"
   to anon, authenticated
   using (true);
 
+create table if not exists public.watchlists (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  market_id uuid not null references public.markets(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  unique (user_id, market_id)
+);
+
+alter table public.watchlists enable row level security;
+
+create index if not exists watchlists_user_created_idx on public.watchlists (user_id, created_at desc);
+
+drop policy if exists "watchlists_select_own" on public.watchlists;
+create policy "watchlists_select_own"
+  on public.watchlists for select
+  to authenticated
+  using (auth.uid() = user_id);
+
+drop policy if exists "watchlists_insert_own" on public.watchlists;
+create policy "watchlists_insert_own"
+  on public.watchlists for insert
+  to authenticated
+  with check (auth.uid() = user_id);
+
+drop policy if exists "watchlists_delete_own" on public.watchlists;
+create policy "watchlists_delete_own"
+  on public.watchlists for delete
+  to authenticated
+  using (auth.uid() = user_id);
+
+create table if not exists public.paper_predictions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  market_id uuid not null references public.markets(id) on delete cascade,
+  side text not null check (side in ('yes', 'no')),
+  probability numeric(5, 4) check (probability >= 0 and probability <= 1),
+  resolved boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (user_id, market_id)
+);
+
+alter table public.paper_predictions enable row level security;
+
+drop trigger if exists paper_predictions_set_updated_at on public.paper_predictions;
+create trigger paper_predictions_set_updated_at
+  before update on public.paper_predictions
+  for each row execute function public.set_updated_at();
+
+create index if not exists paper_predictions_user_created_idx on public.paper_predictions (user_id, created_at desc);
+
+drop policy if exists "paper_predictions_select_own" on public.paper_predictions;
+create policy "paper_predictions_select_own"
+  on public.paper_predictions for select
+  to authenticated
+  using (auth.uid() = user_id);
+
+drop policy if exists "paper_predictions_insert_own" on public.paper_predictions;
+create policy "paper_predictions_insert_own"
+  on public.paper_predictions for insert
+  to authenticated
+  with check (auth.uid() = user_id);
+
+drop policy if exists "paper_predictions_update_own_unresolved" on public.paper_predictions;
+create policy "paper_predictions_update_own_unresolved"
+  on public.paper_predictions for update
+  to authenticated
+  using (auth.uid() = user_id and resolved = false)
+  with check (auth.uid() = user_id);
+
 -- Trusted writes should come from Cloudflare Worker / Supabase service role only.

@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query'
-import { DEMO_MARKETS } from '../data/demo-markets'
 import { supabase } from '../lib/supabase'
 import type { Market } from '../types/market'
 
@@ -12,12 +11,10 @@ const marketSelect =
 export function useMarket(slugOrId: string | undefined) {
   return useQuery({
     queryKey: ['market', slugOrId],
-    enabled: Boolean(slugOrId),
+    enabled: Boolean(supabase && slugOrId),
     queryFn: async (): Promise<Market | null> => {
       if (!slugOrId) return null
-      if (!supabase) {
-        return DEMO_MARKETS.find((m) => m.id === slugOrId || m.slug === slugOrId) ?? null
-      }
+      if (!supabase) return null
       const col = UUID_RE.test(slugOrId) ? 'id' : 'slug'
       const { data, error } = await supabase
         .from('markets')

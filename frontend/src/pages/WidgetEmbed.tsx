@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { DEMO_MARKETS } from '../data/demo-markets'
 import { WidgetStrip } from '../components/WidgetStrip'
+import { useMarket } from '../hooks/useMarket'
 
 function clampPct(n: number) {
   if (Number.isNaN(n)) return 50
@@ -12,11 +12,12 @@ export function WidgetEmbed() {
   const [params] = useSearchParams()
   const compact = params.get('compact') === '1' || params.get('layout') === 'strip'
 
-  const title = params.get('title')?.trim() || DEMO_MARKETS[0]?.title || 'Demo market'
+  const slug = params.get('slug')?.trim() || 'fed-cut-q3'
+  const { data: market, isPending, isError, error } = useMarket(slug)
+  const title = params.get('title')?.trim() || market?.title || 'Live Vortx market'
   const yesParam = params.get('yes')
   const yesRaw = yesParam == null ? Number.NaN : Number(yesParam)
-  const yes = Number.isFinite(yesRaw) ? clampPct(yesRaw) / 100 : (DEMO_MARKETS[0]?.yes_price ?? 0.62)
-  const slug = params.get('slug')?.trim() || DEMO_MARKETS[0]?.slug || 'fed-cut-q3'
+  const yes = Number.isFinite(yesRaw) ? clampPct(yesRaw) / 100 : (market?.yes_price ?? 0.5)
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
 
   const iframeSrc = useMemo(() => {
@@ -30,6 +31,18 @@ export function WidgetEmbed() {
   }, [origin, title, yes, slug])
 
   const snippet = `<iframe src="${origin}${iframeSrc}" title="Vortx odds" width="100%" height="120" style="border:0;border-radius:12px" loading="lazy"></iframe>`
+
+  if (isPending && !params.get('title')) {
+    return <p className="text-sm text-muted">Loading market widget…</p>
+  }
+
+  if (isError || (!market && !params.get('title'))) {
+    return (
+      <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+        Could not load widget market: {error?.message || 'market not found'}
+      </div>
+    )
+  }
 
   if (compact) {
     return <WidgetStrip title={title} yes={yes} slug={slug} />

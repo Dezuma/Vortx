@@ -66,7 +66,7 @@ export function Home() {
 
       <MarketsGrid
         title="Featured markets"
-        subtitle="Live rows stream from Supabase; demo rows appear only when env is missing."
+        subtitle="Live rows stream from Supabase and update when the backend changes."
       />
 
       <section className="rounded-xl border border-dashed border-line bg-accent-soft/50 p-5 text-sm text-muted">

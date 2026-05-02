@@ -1,15 +1,23 @@
 import { Link, useParams } from 'react-router-dom'
+import { MarketActions } from '../components/MarketActions'
 import { useMarket } from '../hooks/useMarket'
 import { supabase } from '../lib/supabase'
 import { formatNoFromYes, formatYesCents } from '../lib/format-price'
 
 export function MarketDetail() {
   const { slugOrId } = useParams()
-  const hasDb = Boolean(supabase)
   const { data: market, isPending, isError, error, refetch } = useMarket(slugOrId)
 
   if (!slugOrId) {
     return <p className="text-sm text-muted">Missing market.</p>
+  }
+
+  if (!supabase) {
+    return (
+      <p className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+        Supabase is not configured. Add the required Cloudflare environment variables and redeploy.
+      </p>
+    )
   }
 
   if (isPending) {
@@ -22,7 +30,7 @@ export function MarketDetail() {
     )
   }
 
-  if (hasDb && isError) {
+  if (isError) {
     return (
       <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-900">
         <p className="font-medium">Could not load market</p>
@@ -68,9 +76,6 @@ export function MarketDetail() {
           <span className="rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-medium uppercase text-muted">
             {m.outcome ?? 'open'}
           </span>
-          {!hasDb ? (
-            <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-900">Demo</span>
-          ) : null}
         </div>
         <h1 className="text-balance text-3xl font-semibold tracking-tight md:text-4xl">{m.title}</h1>
         {m.description ? <p className="max-w-2xl text-muted">{m.description}</p> : null}
@@ -100,6 +105,8 @@ export function MarketDetail() {
           <span>NO {100 - yesPct}%</span>
         </div>
       </div>
+
+      <MarketActions marketId={m.id} marketTitle={m.title} yesPct={yesPct} />
 
       <section className="rounded-xl border border-dashed border-line bg-surface p-4 text-sm text-muted">
         <strong className="text-ink">Share line:</strong>{' '}

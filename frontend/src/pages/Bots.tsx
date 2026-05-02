@@ -1,5 +1,5 @@
 export function Bots() {
-  const demoUrl =
+  const dryRunUrl =
     typeof window !== 'undefined'
       ? `${window.location.origin}/api/oracle-bot?event=Fed%20cuts%20before%20Oct%201&probability=42&market=fed-cut-q3&dryRun=1`
       : '/api/oracle-bot?event=Fed%20cuts%20before%20Oct%201&probability=42&market=fed-cut-q3&dryRun=1'
@@ -21,9 +21,9 @@ export function Bots() {
           Deploy on Cloudflare Pages, then open this URL. If <code className="font-mono text-xs">BOT_ADMIN_TOKEN</code>{' '}
           is set, send it as <code className="font-mono text-xs">Authorization: Bearer ...</code>.
         </p>
-        <pre className="mt-4 overflow-x-auto rounded-lg bg-neutral-900 p-3 text-xs text-neutral-100">{demoUrl}</pre>
+        <pre className="mt-4 overflow-x-auto rounded-lg bg-neutral-900 p-3 text-xs text-neutral-100">{dryRunUrl}</pre>
         <a
-          href={demoUrl}
+          href={dryRunUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="mt-4 inline-flex rounded-lg bg-ink px-4 py-2 text-sm font-semibold text-white no-underline hover:bg-neutral-800"

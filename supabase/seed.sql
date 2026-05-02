@@ -1,4 +1,4 @@
--- Safe to rerun: updates existing demo markets by slug.
+-- Safe to rerun: updates initial live markets by slug.
 
 insert into public.markets (slug, title, description, yes_price, outcome, source_url)
 values
