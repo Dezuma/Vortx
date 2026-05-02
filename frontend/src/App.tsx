@@ -33,7 +33,7 @@ function Layout() {
               Bots
             </Link>
             <Link to="/widget" className="text-accent no-underline hover:underline">
-              Widget
+              Newsletter
             </Link>
           </nav>
           <AuthStatus />
