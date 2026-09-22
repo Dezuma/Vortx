@@ -1,0 +1,32 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "vortx-marketing-bot",
+  "main": "./worker/x-marketing-cron.js",
+  "compatibility_date": "2026-05-01",
+  "workers_dev": true,
+  "observability": {
+    "enabled": true
+  },
+  "triggers": {
+    // Single trigger (Cloudflare free plan: 5 crons per account, shared with
+    // vortx-ingest-cron). The Worker expands per-day channel schedules itself.
+    "crons": [
+      "17 14 * * *"
+    ]
+  },
+  "vars": {
+    "PUBLIC_SITE_URL": "https://vortxmkt.com",
+    "VITE_SUPABASE_URL": "https://gejjtdrqyahajtijvghb.supabase.co",
+    "MARKETING_CTA_URL": "https://vortxmkt.com/?view=pricing",
+    "MARKETING_BOT_ENABLED": "true",
+    "MARKETING_BOT_DRY_RUN": "false",
+    "MARKETING_IMAGE_MODE": "teaser-card",
+    "MARKETING_IMAGE_REQUIRED": "false",
+    "MARKETING_CREATIVE_MODE": "playbook",
+    "DISCORD_BOT_ENABLED": "true",
+    "DISCORD_BOT_DRY_RUN": "false",
+    "REDDIT_BOT_ENABLED": "false",
+    "REDDIT_BOT_DRY_RUN": "true",
+    "REDDIT_SUBREDDIT": "VortxUnredacted"
+  }
+}

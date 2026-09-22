@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vortx Enterprise Map API</title>
+    <meta
+      name="description"
+      content="Enterprise documentation for the viewport-bounded Vortx Map API."
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+        background: #ffffff;
+        color: #0f172a;
+      }
+      body {
+        margin: 0;
+      }
+      main {
+        max-width: 54rem;
+        margin: 0 auto;
+        padding: 3rem 1.25rem 5rem;
+      }
+      h1,
+      h2 {
+        line-height: 1.15;
+      }
+      h1 {
+        font-size: clamp(2.2rem, 6vw, 4rem);
+      }
+      h2 {
+        margin-top: 2.25rem;
+      }
+      p,
+      li {
+        color: #334155;
+        line-height: 1.7;
+      }
+      code,
+      pre {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      pre {
+        overflow-x: auto;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.8rem;
+        background: #f8fafc;
+        padding: 1rem;
+      }
+      .eyebrow {
+        color: #0369a1;
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      .note {
+        border-left: 4px solid #ffb800;
+        background: #fef3c7;
+        padding: 0.9rem 1rem;
+      }
+      a {
+        color: #0369a1;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">Enterprise API documentation</p>
+      <h1>Vortx Map API</h1>
+      <p>
+        Query the same bounds and filters used by the Vortx map. This endpoint
+        is available only to active Enterprise API keys and returns full filing,
+        entity, source, and geocoding-confidence fields.
+      </p>
+
+      <h2>Endpoint</h2>
+      <pre><code>GET https://vortxmkt.com/api/enterprise/map/signals</code></pre>
+
+      <h2>Authentication</h2>
+      <pre><code>Authorization: Bearer vx_map_...</code></pre>
+      <p>
+        You may alternatively send <code>X-Vortx-API-Key</code>. Raw keys are
+        shown once; Vortx stores only their SHA-256 hashes.
+      </p>
+
+      <h2>Required bounds</h2>
+      <pre><code>curl --get 'https://vortxmkt.com/api/enterprise/map/signals' \
+  --header "Authorization: Bearer $VORTX_MAP_API_KEY" \
+  --data-urlencode 'bounds=-125,32,-114,42'</code></pre>
+
+      <h2>Filters</h2>
+      <ul>
+        <li><code>types=warn,bankruptcy,liens,congress,form4</code></li>
+        <li><code>q=</code> entity, politician, ticker, state, or city</li>
+        <li><code>cross_only=1</code> exact issuer/ticker cross-signals only</li>
+      </ul>
+
+      <h2>Limits</h2>
+      <ul>
+        <li>2,000 points maximum per viewport response</li>
+        <li>World-scale bounds are allowed (up to 360° longitude by 180° latitude) for the globe view</li>
+        <li>180 requests per minute per Enterprise key</li>
+        <li>Responses use <code>private, no-store</code></li>
+      </ul>
+
+      <p class="note">
+        Cross-signals show the timing relationship between two public filings.
+        They are not evidence of insider knowledge, coordination, causation, or
+        wrongdoing.
+      </p>
+
+      <p>
+        Operator and Professional include individual CSV export. Enterprise
+        additionally includes this bounds API and filtered visible-map export.
+      </p>
+      <p><a href="/?view=map">Open the Vortx map</a></p>
+    </main>
+  </body>
+</html>

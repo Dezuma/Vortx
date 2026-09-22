@@ -1,0 +1,33 @@
+---
+description: Visualization design law for Vortx UI (Information, Story, Goal, Visual Form)
+globs: frontend/**/*.{tsx,ts,css,js},frontend/public/**,scripts/ensure-patched-dist.mjs
+alwaysApply: false
+---
+
+# Visualization Design Law
+
+Every chart, map, feed panel, or data surface must balance four pillars. Missing one produces weak UX:
+
+| Pillar | Implicit quality | Failure mode |
+|--------|------------------|--------------|
+| **Information** | Integrity | Wrong or guessed data |
+| **Story** | Interestingness | Boring table with no meaning |
+| **Goal** | Usefulness | Pretty but unusable |
+| **Visual Form** | Beauty | Raw dump with no hierarchy |
+
+Successful visualization sits at the center where all four overlap.
+
+## Enforcement
+
+1. **Information** — Never guess coordinates, names, or counts. Label confidence and exclusions honestly.
+2. **Story** — Every data view needs a one-line narrative: what pattern the user should notice.
+3. **Goal** — Every view needs an obvious next action (filter, click, export, subscribe, watch).
+4. **Visual Form** — Match Vortx glassmorphic language: dark panels, blur, accent glow, terminal typography, restrained motion.
+
+## Anti-patterns
+
+- **Eye candy**: beautiful form + data, no story or goal.
+- **Plot only**: data + story, no visual hierarchy or action path.
+- **Useless template**: goal + form without real information or narrative.
+
+When adding UI, include at least: honest data label, story copy or pillar hint, primary action, and glass/visual polish consistent with existing pages.

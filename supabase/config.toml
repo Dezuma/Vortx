@@ -1,0 +1,22 @@
+# Vortx Supabase Auth — redirect allow-list for OAuth, magic links, and password reset.
+# Apply to hosted project: npm run auth:configure (requires SUPABASE_ACCESS_TOKEN)
+# Docs: https://supabase.com/docs/guides/auth/redirect-urls
+
+project_id = "gejjtdrqyahajtijvghb"
+
+[auth]
+enabled = true
+site_url = "https://vortxmkt.com"
+additional_redirect_urls = [
+  "https://vortxmkt.com",
+  "https://vortxmkt.com/",
+  "https://vortxmkt.com/?view=customer",
+  "https://vortxmkt.com/?view=admin",
+  "https://vortxmkt.com/?view=customer&auth=recovery",
+  "https://vortxmkt.com/?view=admin&auth=recovery",
+  "https://www.vortxmkt.com",
+  "https://www.vortxmkt.com/?view=customer",
+  "http://localhost:8787",
+  "http://localhost:8787/?view=customer",
+  "http://127.0.0.1:8787/?view=customer",
+]

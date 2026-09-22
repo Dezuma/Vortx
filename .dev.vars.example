@@ -1,0 +1,101 @@
+VITE_SUPABASE_URL=
+VITE_SUPABASE_PUBLISHABLE_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+VORTX_ADMIN_EMAILS=
+VORTX_ADMIN_BOOTSTRAP_EMAIL=
+VORTX_ADMIN_BOOTSTRAP_PASSWORD=
+# Marketing display for /api/public-stats (optional; omit to use computed floor, min 50)
+VORTX_DISPLAY_SUBSCRIBER_COUNT=
+PUBLIC_SITE_URL=http://localhost:8787
+STRIPE_PRODUCT_ID=
+STRIPE_SCOUT_PRICE_ID=
+STRIPE_SENTINEL_PRICE_ID=
+STRIPE_NEBULA_PRICE_ID=
+STRIPE_PULSAR_PRICE_ID=
+STRIPE_SUPERNOVA_PRICE_ID=
+STRIPE_GALACTIC_PRICE_ID=
+STRIPE_CUSTOM_PRICE_ID=
+STRIPE_CUSTOM_MODE=payment
+# One-time $5 consumer unlocks (create in Stripe Dashboard, mode=payment)
+STRIPE_CONTRACTOR_CHECK_PRICE_ID=
+STRIPE_JOB_SAFETY_SCORE_PRICE_ID=
+# Optional; falls back to STRIPE_CONTRACTOR_CHECK_PRICE_ID when unset
+STRIPE_LANDLORD_CHECK_PRICE_ID=
+# Optional invite URL for case-file discussion link-outs
+DISCORD_INVITE_URL=
+PUBLIC_DISCORD_INVITE_URL=
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+COURTLISTENER_API_TOKEN=
+PACER_USERNAME=
+PACER_PASSWORD=
+
+# X marketing bot (posting images requires OAuth 1.0a user credentials)
+X_API_KEY=
+X_API_SECRET=
+X_BEARER_TOKEN=
+X_ACCESS_TOKEN=
+X_ACCESS_TOKEN_SECRET=
+X_OAUTH2_USER_TOKEN=
+MARKETING_BOT_ENABLED=false
+MARKETING_BOT_DRY_RUN=true
+MARKETING_BOT_RUN_TOKEN=
+
+# Case publish distribution (admin approve → Discord PNGs + X + Substack)
+# CASE_X_POST_ENABLED=true
+# CASE_X_POST_DRY_RUN=false
+DISCORD_CASES_WEBHOOK_URL=
+
+# Substack (vortxmkt): composer paste is the default path on approve.
+# Paste substack.sid / connect.sid from browser DevTools only if you want auto-post.
+# SUBSTACK_SID=
+# SUBSTACK_PUBLISH_ON_APPROVE=false
+# SUBSTACK_PUBLICATION_URL=https://vortxmkt.substack.com
+
+# Discord THE VAULT (locked channels)
+DISCORD_UNFILTERED_SIGNALS_WEBHOOK_URL=
+DISCORD_DEATH_SPIRALS_WEBHOOK_URL=
+DISCORD_DATA_DUMPS_WEBHOOK_URL=
+DISCORD_TACTICAL_PLAYBOOK_WEBHOOK_URL=
+
+# Discord VORTX FREE INTELLIGENCE (webhooks from Discord → channel → Integrations → Webhooks)
+DISCORD_ALPHA_FEED_WEBHOOK_URL=
+DISCORD_MASS_LAYOFFS_WEBHOOK_URL=
+DISCORD_CONGRESS_INSIDERS_WEBHOOK_URL=
+DISCORD_MARKET_CHATTER_WEBHOOK_URL=
+# Legacy: old #bankruptcy-watch webhook reused as death-spirals fallback
+DISCORD_BANKRUPTCY_WATCH_WEBHOOK_URL=
+# Legacy alias for #alpha-feed when DISCORD_ALPHA_FEED_WEBHOOK_URL is unset
+DISCORD_WEBHOOK_URL=
+DISCORD_BOT_ENABLED=true
+DISCORD_BOT_DRY_RUN=false
+# Ingest-time Discord: WARN wide open; trades need $ / severity / cluster-buy
+# DISCORD_INGEST_POSTS_ENABLED=true
+# DISCORD_TRADE_FORM4_MIN_AMOUNT=100000
+# DISCORD_TRADE_CONGRESS_MIN_AMOUNT=50000
+# DISCORD_CLUSTER_BUY_MIN=3
+
+# Trend-aligned company pick + hashtags (Google Trends RSS, geo US)
+MARKETING_TRENDS_GEO=US
+# MARKETING_TRENDS_DISABLED=false
+# MARKETING_TREND_KEYWORDS=layoffs,bankruptcy,commercial real estate
+MARKETING_CTA_URL=https://vortxmkt.com/?view=pricing
+MARKETING_IMAGE_MODE=teaser-card
+MARKETING_IMAGE_REQUIRED=false
+MARKETING_CREATIVE_MODE=deterministic
+OLLAMA_BASE_URL=
+OLLAMA_MODEL=llama3.1
+OLLAMA_REQUIRED=false
+
+# Optional: Resend transactional email for blind spot scan unlock confirmations
+RESEND_API_KEY=
+SCAN_EMAIL_FROM=scan@vortxmkt.com
+
+# Reddit weekly digest (script app from https://www.reddit.com/prefs/apps)
+REDDIT_CLIENT_ID=
+REDDIT_CLIENT_SECRET=
+REDDIT_USERNAME=
+REDDIT_PASSWORD=
+REDDIT_SUBREDDIT=VortxUnredacted
+REDDIT_BOT_ENABLED=false
+REDDIT_BOT_DRY_RUN=true

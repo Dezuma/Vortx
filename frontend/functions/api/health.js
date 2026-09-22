@@ -1,21 +1,36 @@
+import { getSupabaseUrl, hasSupabaseServiceRoleKey } from '../lib/worker-env.js'
+
 function has(value) {
   return Boolean(String(value || '').trim())
 }
 
+function validHttpUrl(value) {
+  try {
+    const url = new URL(String(value || '').trim())
+    return url.protocol === 'https:' || url.hostname === 'localhost'
+  } catch {
+    return false
+  }
+}
+
 export function onRequestGet({ env }) {
+  const supabaseUrl = getSupabaseUrl(env)
+  const publicSiteUrl = String(env.PUBLIC_SITE_URL || '').trim()
+
   return new Response(
     JSON.stringify(
       {
         ok: true,
         services: {
-          supabaseUrl: has(env.VITE_SUPABASE_URL),
+          supabaseUrl: has(supabaseUrl),
+          supabaseUrlValid: has(supabaseUrl) && validHttpUrl(supabaseUrl),
           supabasePublishableKey: has(env.VITE_SUPABASE_PUBLISHABLE_KEY) || has(env.VITE_SUPABASE_ANON_KEY),
-          supabaseServiceRoleKey: has(env.SUPABASE_SERVICE_ROLE_KEY),
+          supabaseServiceRoleKey: hasSupabaseServiceRoleKey(env),
           stripeSecretKey: has(env.STRIPE_SECRET_KEY),
-          botAdminToken: has(env.BOT_ADMIN_TOKEN),
-          publicSiteUrl: has(env.PUBLIC_SITE_URL),
+          publicSiteUrl: has(publicSiteUrl),
+          publicSiteUrlValid: has(publicSiteUrl) && validHttpUrl(publicSiteUrl),
         },
-        note: 'Stripe Checkout uses server-side Workers env. Verify checkout from /pricing after STRIPE_SECRET_KEY is set.',
+        note: 'Stripe Checkout uses server-side Workers env. Verify checkout after STRIPE_SECRET_KEY is set.',
       },
       null,
       2,

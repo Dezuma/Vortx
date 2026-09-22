@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# Vortx CLI ; Wrangler + deploy helpers (run from repo: ./vortx … or bash vortx …)
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$ROOT"
+
+usage() {
+  echo "Vortx CLI ; usage:" >&2
+  echo "  ./vortx deploy          # CLOUDFLARE_API_TOKEN or prior wrangler login" >&2
+  echo "  ./vortx dev             # npx wrangler dev (loads .dev.vars if present)" >&2
+  echo "  ./vortx login           # OAuth (blocked if CLOUDFLARE_API_TOKEN is set ; use deploy instead)" >&2
+  echo "  ./vortx sync-dev-vars   # copy VITE_* from frontend/.env.local → .dev.vars" >&2
+  echo "  ./vortx verify-token   # CLOUDFLARE_API_TOKEN → Cloudflare /tokens/verify" >&2
+  echo "  ./vortx health [url]    # curl /api/health (default https://vortxmkt.com)" >&2
+}
+
+cmd="${1:-}"
+shift || true
+
+case "$cmd" in
+  deploy)
+    exec "$ROOT/scripts/deploy.sh" "$@"
+    ;;
+  dev)
+    exec npx wrangler dev "$@"
+    ;;
+  login)
+    if [[ -n "${CLOUDFLARE_API_TOKEN:-}${CF_API_TOKEN:-}" ]]; then
+      echo "CLOUDFLARE_API_TOKEN (or CF_API_TOKEN) is set ; Wrangler uses that for auth." >&2
+      echo "OAuth login is disabled until you unset it: unset CLOUDFLARE_API_TOKEN CF_API_TOKEN" >&2
+      echo "To deploy with the existing token: ./vortx deploy" >&2
+      exit 0
+    fi
+    exec npx wrangler login "$@"
+    ;;
+  sync-dev-vars)
+    exec "$ROOT/scripts/sync-dev-vars-from-env-local.sh" "$@"
+    ;;
+  verify-token)
+    exec "$ROOT/scripts/verify-cloudflare-token.sh" "$@"
+    ;;
+  health)
+    url="${1:-https://vortxmkt.com}"
+    exec curl -sS "${url%/}/api/health" | "${PAGER:-cat}"
+    ;;
+  ""|-h|--help|help)
+    usage
+    exit 0
+    ;;
+  *)
+    echo "unknown command: $cmd" >&2
+    usage
+    exit 1
+    ;;
+esac

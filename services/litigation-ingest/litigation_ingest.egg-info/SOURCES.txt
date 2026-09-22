@@ -1,0 +1,16 @@
+README.md
+pyproject.toml
+litigation_ingest/__init__.py
+litigation_ingest/cli.py
+litigation_ingest/models.py
+litigation_ingest/normalization.py
+litigation_ingest/scoring.py
+litigation_ingest.egg-info/PKG-INFO
+litigation_ingest.egg-info/SOURCES.txt
+litigation_ingest.egg-info/dependency_links.txt
+litigation_ingest.egg-info/entry_points.txt
+litigation_ingest.egg-info/top_level.txt
+litigation_ingest/adapters/__init__.py
+litigation_ingest/adapters/base.py
+litigation_ingest/adapters/fixture.py
+tests/test_scoring.py

@@ -1,14 +1,21 @@
 @import 'tailwindcss';
 
 @theme {
-  --font-sans: ui-sans-serif, system-ui, sans-serif;
-  --color-surface: #fafafa;
-  --color-surface-elevated: #ffffff;
-  --color-ink: #0a0a0a;
-  --color-muted: #525252;
-  --color-line: #e5e5e5;
-  --color-accent: #2563eb;
-  --color-accent-soft: #eff6ff;
+  --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", Inter, ui-sans-serif, system-ui, sans-serif;
+  --font-data: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  --color-surface: #ffffff;
+  --color-surface-elevated: #f8fafc;
+  --color-panel: #f8fafc;
+  --color-ink: #0f172a;
+  --color-muted: #334155;
+  --color-soft: #64748b;
+  --color-line: #e2e8f0;
+  --color-metallic: #cbd5e1;
+  --color-accent: #0369a1;
+  --color-accent-soft: #082f49;
+  --color-terminal-blue: #50b4ff;
+  --color-terminal-green: #48ff9b;
 }
 
 @layer base {
@@ -17,10 +24,484 @@
     @apply antialiased text-ink bg-surface scroll-smooth;
   }
   body {
-    @apply m-0 min-h-svh;
+    @apply m-0 min-h-svh bg-white;
   }
   :where(a, button, input, textarea, select, [tabindex]):focus-visible {
     @apply outline-2 outline-offset-2 outline-accent;
+  }
+}
+
+@layer components {
+  .display-font {
+    font-family: var(--font-display);
+    letter-spacing: -0.045em;
+  }
+
+  .data-font {
+    font-family: var(--font-data);
+  }
+
+  .eyebrow {
+    font-family: var(--font-data);
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgb(80 180 255 / 0.9);
+  }
+
+  .glass-panel {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgb(100 116 139 / 0.45);
+    background:
+      linear-gradient(
+        165deg,
+        rgb(51 65 85 / 0.93) 0%,
+        rgb(30 41 59 / 0.95) 35%,
+        rgb(15 23 42 / 0.97) 70%,
+        rgb(2 6 23 / 0.98) 100%
+      );
+    box-shadow:
+      0 24px 90px rgb(0 0 0 / 0.42),
+      inset 0 1px 0 rgb(255 255 255 / 0.12),
+      inset 0 -1px 0 rgb(0 0 0 / 0.35);
+    backdrop-filter: blur(22px) saturate(135%);
+  }
+
+  .glass-panel::before {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    content: '';
+    opacity: 0.42;
+    background:
+      radial-gradient(circle at 14% 12%, rgb(125 211 252 / 0.14), transparent 14rem),
+      radial-gradient(circle at 88% 88%, rgb(0 0 0 / 0.35), transparent 16rem),
+      radial-gradient(circle at 78% 16%, rgb(80 180 255 / 0.1), transparent 12rem),
+      repeating-linear-gradient(160deg, rgb(255 255 255 / 0.025) 0 1px, transparent 1px 13px);
+  }
+
+  .glass-panel > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .glass-panel .text-ink,
+  .glass-panel .display-font,
+  .glass-panel h1,
+  .glass-panel h2,
+  .glass-panel h3,
+  .glass-panel h4 {
+    color: #fff;
+    text-shadow: 0 1px 4px rgb(0 0 0 / 0.65);
+  }
+
+  .glass-panel .text-muted {
+    color: #f1f5f9;
+    text-shadow: 0 1px 3px rgb(0 0 0 / 0.55);
+  }
+
+  .glass-panel .text-soft {
+    color: #e2e8f0;
+    text-shadow: 0 1px 3px rgb(0 0 0 / 0.5);
+  }
+
+  .glass-panel .text-accent,
+  .glass-panel .data-font.text-accent {
+    color: #93c5fd;
+    font-weight: 600;
+    text-shadow: none;
+  }
+
+  .glass-panel .eyebrow {
+    color: #7dd3fc;
+    font-weight: 700;
+    text-shadow: none;
+  }
+
+  .glass-panel .eyebrow.text-soft {
+    color: #93c5fd;
+  }
+
+  .glass-panel :is(.text-terminal-blue, [class*='text-terminal-blue']) {
+    color: #bae6fd;
+    font-weight: 600;
+    text-shadow: none;
+  }
+
+  .glass-panel :is(.text-terminal-green, [class*='text-terminal-green']) {
+    color: #6ee7b7;
+    font-weight: 600;
+    text-shadow: none;
+  }
+
+  .glass-panel :is([class*='bg-black/30'], [class*='bg-black/35'], [class*='bg-black/40'], [class*='bg-black/45']) {
+    background: rgb(2 6 23 / 0.72);
+    border-color: rgb(148 163 184 / 0.4);
+  }
+
+  .glass-panel :is([class*='border-white/10']) {
+    border-color: rgb(148 163 184 / 0.35);
+  }
+
+  .terminal-button {
+    border: 1px solid rgb(80 180 255 / 0.42);
+    background: rgb(80 180 255 / 0.1);
+    color: rgb(125 211 252);
+    transition:
+      border-color 240ms ease,
+      background 240ms ease,
+      color 240ms ease,
+      transform 240ms ease;
+  }
+
+  .terminal-button:hover {
+    transform: translateY(-1px);
+    border-color: rgb(80 180 255 / 0.8);
+    background: rgb(80 180 255 / 0.16);
+    color: rgb(248 250 252);
+  }
+
+  .terminal-button-solid {
+    border: 1px solid rgb(125 211 252 / 0.65);
+    background: linear-gradient(135deg, #38bdf8, #7dd3fc);
+    color: #020617;
+    box-shadow: 0 16px 36px rgb(56 189 248 / 0.24), inset 0 1px 0 rgb(255 255 255 / 0.35);
+    transition:
+      filter 180ms ease,
+      transform 180ms ease;
+  }
+
+  .terminal-button-solid:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.08);
+  }
+
+  .arena-hero,
+  .arena-panel,
+  .arena-card,
+  .fighter-card,
+  .vs-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgb(148 163 184 / 0.25);
+    background:
+      linear-gradient(135deg, rgb(15 23 42 / 0.96), rgb(2 6 23 / 0.92)),
+      radial-gradient(circle at top left, rgb(220 38 38 / 0.18), transparent 18rem);
+    box-shadow: 0 24px 80px rgb(0 0 0 / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.06);
+  }
+
+  .arena-hero,
+  .arena-panel,
+  .arena-card,
+  .vs-card {
+    border-radius: 1.25rem;
+  }
+
+  .arena-hero::before,
+  .arena-panel::before,
+  .arena-card::before,
+  .fighter-card::before {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    content: '';
+    opacity: 0.5;
+    background:
+      radial-gradient(circle at 20% 20%, rgb(248 113 113 / 0.16), transparent 16rem),
+      radial-gradient(circle at 90% 10%, rgb(56 189 248 / 0.13), transparent 14rem),
+      repeating-linear-gradient(135deg, rgb(255 255 255 / 0.035) 0 1px, transparent 1px 12px);
+  }
+
+  .arena-card {
+    transition:
+      transform 180ms ease,
+      border-color 180ms ease,
+      filter 180ms ease,
+      box-shadow 180ms ease;
+  }
+
+  .arena-card:hover {
+    transform: translateY(-4px) scale(1.01);
+    border-color: rgb(248 113 113 / 0.55);
+    filter: brightness(1.08);
+    box-shadow: 0 24px 90px rgb(127 29 29 / 0.22), inset 0 1px 0 rgb(255 255 255 / 0.1);
+  }
+
+  .fighter-card {
+    position: relative;
+    border-radius: 1.25rem;
+    transition:
+      border-color 180ms ease,
+      box-shadow 180ms ease;
+  }
+
+  .fighter-card:hover {
+    border-color: rgb(248 113 113 / 0.55);
+    box-shadow: 0 24px 90px rgb(127 29 29 / 0.22), inset 0 1px 0 rgb(255 255 255 / 0.1);
+  }
+
+  .fighter-portrait {
+    display: flex;
+    min-height: 13rem;
+    flex-direction: column;
+    border-bottom: 1px solid rgb(148 163 184 / 0.2);
+    padding: 1rem;
+  }
+
+  .vs-card {
+    padding: 1.25rem;
+    animation: panel-enter 520ms ease both;
+  }
+
+  .cta-danger {
+    border: 1px solid rgb(248 113 113 / 0.6);
+    background: linear-gradient(135deg, #991b1b, #ef4444 52%, #7f1d1d);
+    box-shadow: 0 12px 28px rgb(127 29 29 / 0.38), inset 0 1px 0 rgb(255 255 255 / 0.25);
+    transition:
+      transform 160ms ease,
+      filter 160ms ease,
+      box-shadow 160ms ease;
+  }
+
+  .cta-danger:hover {
+    transform: translateY(-1px) rotate(-0.35deg);
+    filter: brightness(1.1);
+    animation: danger-shake 260ms ease-in-out 1;
+  }
+
+}
+
+@keyframes panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes danger-shake {
+  0%,
+  100% {
+    transform: translateY(-1px) translateX(0) rotate(-0.35deg);
+  }
+  30% {
+    transform: translateY(-1px) translateX(-2px) rotate(-0.6deg);
+  }
+  65% {
+    transform: translateY(-1px) translateX(2px) rotate(0.35deg);
+  }
+}
+
+@keyframes fighter-trade-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-3px);
+  }
+  75% {
+    transform: translateX(3px);
+  }
+}
+
+@keyframes fighter-old-shake {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(-5px, 2px) rotate(-0.5deg);
+  }
+  40% {
+    transform: translate(5px, -2px) rotate(0.5deg);
+  }
+  60% {
+    transform: translate(-4px, -1px);
+  }
+  80% {
+    transform: translate(4px, 1px);
+  }
+}
+
+@keyframes fighter-neon-jitter {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(0.5px, -0.5px) scale(1.004);
+  }
+  66% {
+    transform: translate(-0.5px, 0.5px) scale(0.998);
+  }
+}
+
+@keyframes fighter-specter-chaos {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+  15% {
+    transform: translate(1px, -2px) scale(1.012) rotate(-0.4deg);
+  }
+  35% {
+    transform: translate(-2px, 1px) scale(0.988) rotate(0.35deg);
+  }
+  55% {
+    transform: translate(2px, 2px) scale(1.01) rotate(0.2deg);
+  }
+  75% {
+    transform: translate(-1px, -1px) scale(0.995) rotate(-0.25deg);
+  }
+}
+
+@keyframes fighter-breathe-glow {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.65;
+  }
+}
+
+@keyframes fighter-neon-scan {
+  0% {
+    transform: translateY(-120%);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.45;
+  }
+  100% {
+    transform: translateY(120%);
+    opacity: 0;
+  }
+}
+
+@keyframes fighter-coin-fall {
+  from {
+    transform: translateY(-12px) rotate(0deg);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.9;
+  }
+  to {
+    transform: translateY(120px) rotate(220deg);
+    opacity: 0;
+  }
+}
+
+@layer components {
+  .fighter-card--live {
+    box-shadow:
+      0 0 0 1px rgb(148 163 184 / 0.28),
+      0 18px 55px rgb(0 0 0 / 0.5),
+      0 0 36px rgb(220 38 38 / 0.14),
+      inset 0 1px 0 rgb(255 255 255 / 0.06);
+  }
+
+  .fighter-neon-scan {
+    animation: fighter-neon-scan 2.6s ease-in-out infinite;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      rgb(56 189 248 / 0.22) 48%,
+      transparent 100%
+    );
+  }
+
+  .fighter-portrait-img {
+    display: block;
+    transform-origin: 50% 38%;
+    max-width: none;
+  }
+
+  .fighter-card--neon_raider:not(:hover) .fighter-portrait-img {
+    animation: fighter-neon-jitter 0.28s linear infinite;
+  }
+
+  .fighter-card--ember_wraith:not(:hover) .fighter-portrait-img {
+    animation: fighter-specter-chaos 1.8s ease-in-out infinite;
+  }
+
+  .fighter-card--old_guard .fighter-breathe-layer,
+  .fighter-card--crown_strategist .fighter-breathe-layer {
+    animation: fighter-breathe-glow 4.2s ease-in-out infinite;
+  }
+
+  .fighter-card--old_guard:hover .fighter-sprite-wrap {
+    animation: fighter-old-shake 150ms ease-in-out 1;
+    filter: brightness(1.35);
+  }
+
+  .fighter-card--crown_strategist:hover .fighter-sprite-wrap {
+    filter: brightness(1.12);
+  }
+
+  .fighter-card--neon_raider:hover .fighter-sprite-wrap {
+    filter: brightness(1.85);
+    transition: filter 120ms ease;
+  }
+
+  .fighter-card--ember_wraith .fighter-heat-haze {
+    opacity: 0.45;
+    mix-blend-mode: screen;
+    background: radial-gradient(circle at 50% 40%, rgb(251 146 60 / 0.35), transparent 55%);
+    animation: fighter-breathe-glow 2.4s ease-in-out infinite;
+  }
+
+  .fighter-card--ember_wraith:hover .fighter-specter-flare {
+    opacity: 0.85;
+  }
+
+  .fighter-card--crown_strategist:hover .fighter-warden-flare {
+    opacity: 0.75;
+  }
+
+  .fighter-trade-cta {
+    opacity: 0;
+    transform: translateY(6px);
+    transition:
+      opacity 160ms ease,
+      transform 160ms ease;
+  }
+
+  .fighter-card:hover .fighter-trade-cta {
+    opacity: 1;
+    transform: translateY(0);
+    animation: fighter-trade-shake 0.45s ease-in-out infinite;
+  }
+
+  .market-card--hot {
+    border-color: rgb(251 146 60 / 0.75) !important;
+    box-shadow:
+      0 0 22px rgb(251 146 60 / 0.45),
+      0 20px 60px rgb(127 29 29 / 0.35),
+      inset 0 1px 0 rgb(255 255 255 / 0.08);
+    animation: hot-pulse 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes hot-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 18px rgb(251 146 60 / 0.35),
+      0 20px 60px rgb(127 29 29 / 0.28),
+      inset 0 1px 0 rgb(255 255 255 / 0.08);
+  }
+  50% {
+    box-shadow:
+      0 0 26px rgb(251 146 60 / 0.65),
+      0 22px 70px rgb(127 29 29 / 0.38),
+      inset 0 1px 0 rgb(255 255 255 / 0.1);
   }
 }
 

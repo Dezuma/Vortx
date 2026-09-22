@@ -1,0 +1,19 @@
+---
+description: Protect the approved Vortx glassmorphic UI direction
+globs: frontend/src/**/*.{tsx,ts,css},frontend/index.html,wrangler.jsonc,scripts/ensure-patched-dist.mjs
+alwaysApply: false
+---
+
+# Vortx Glassmorphic UI Protection
+
+The approved Vortx website UI is a dark glassmorphic institutional interface. Do not replace it with a plain flat Tailwind layout, default SaaS cards, or a different visual system unless the user explicitly asks to redesign the UI.
+
+Required visual language:
+
+- Preserve `glass-panel`, `display-font`, `data-font`, terminal blue/green accents, metallic borders, black translucent panels, backdrop blur, and subtle grid/radial backgrounds.
+- Keep the premium public-record intelligence tone: institutional, minimal, dark, data-forward, and easy on the eyes.
+- New marketing/sales sections must be integrated into the existing glass style instead of changing the overall layout language.
+- Do not reintroduce broken production-bundle rollback behavior or stale asset references. Main deploys should build from `frontend/src` unless the user explicitly asks for a bundle rollback.
+- Before deploying UI changes, run `npm run typecheck` in `frontend/`, verify generated JS/CSS assets are not HTML, and confirm `https://vortxmkt.com` is not blank.
+
+If a task requires functional UI additions, add them inside the glassmorphic system and call out any unavoidable visual deviation before deploying.

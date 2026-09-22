@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="Vortx: see Congress and insider stock trades">
+  <defs>
+    <radialGradient id="glow" cx="82%" cy="28%" r="55%">
+      <stop offset="0" stop-color="#7dd3fc" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#020617" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="orb" cx="32%" cy="28%" r="70%">
+      <stop offset="0" stop-color="#7dd3fc"/>
+      <stop offset="0.28" stop-color="#0284c7"/>
+      <stop offset="0.62" stop-color="#0f172a"/>
+      <stop offset="1" stop-color="#020617"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="#020617"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <circle cx="980" cy="318" r="196" fill="url(#orb)" stroke="#7dd3fc" stroke-width="3"/>
+  <circle cx="1018" cy="266" r="7" fill="#86efac"/>
+  <circle cx="916" cy="336" r="7" fill="#86efac"/>
+  <circle cx="992" cy="388" r="7" fill="#86efac"/>
+  <text x="184" y="92" fill="#f8fafc" font-family="Liberation Sans,DejaVu Sans,sans-serif" font-size="36" font-weight="700">VORTX</text>
+  <text x="184" y="126" fill="#7dd3fc" font-family="Liberation Sans,DejaVu Sans,sans-serif" font-size="22" font-weight="700" letter-spacing="3">PUBLIC FILINGS DESK</text>
+  <text x="72" y="258" fill="#f8fafc" font-family="Liberation Sans,DejaVu Sans,sans-serif" font-size="72" font-weight="700">See Congress and</text>
+  <text x="72" y="346" fill="#7dd3fc" font-family="Liberation Sans,DejaVu Sans,sans-serif" font-size="72" font-weight="700">insider stock trades</text>
+  <text x="72" y="512" fill="#94a3b8" font-family="Liberation Sans,DejaVu Sans,sans-serif" font-size="24" font-weight="700">Public filings. One live feed.</text>
+  <text x="72" y="558" fill="#7dd3fc" font-family="Liberation Sans,DejaVu Sans,sans-serif" font-size="24" font-weight="700">vortxmkt.com</text>
+</svg>

@@ -6,26 +6,50 @@
   "observability": {
     "enabled": true
   },
+  "triggers": {
+    "crons": [
+      "47 */2 * * *"
+    ]
+  },
   "workers_dev": true,
   "preview_urls": true,
+  "routes": [
+    {
+      "pattern": "vortxmkt.com",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.vortxmkt.com",
+      "custom_domain": true
+    }
+  ],
   "build": {
-    "command": "cd frontend && npm ci && npm run build"
+    "command": "node scripts/ensure-patched-dist.mjs"
   },
   "assets": {
     "binding": "ASSETS",
     "directory": "./frontend/dist",
-    "not_found_handling": "single-page-application"
+    "not_found_handling": "single-page-application",
+    "run_worker_first": true
   },
   "vars": {
-    "PUBLIC_SITE_URL": "https://vortx.debaezu.workers.dev",
+    "PUBLIC_SITE_URL": "https://vortxmkt.com",
     "VITE_SUPABASE_URL": "https://gejjtdrqyahajtijvghb.supabase.co",
     "VITE_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_jM3OQdwRXyfYoNFbatxx7A_xrRglOuh",
     "STRIPE_PRODUCT_ID": "prod_TzZv53ND7BGNVx",
-    "STRIPE_NEBULA_PRICE_ID": "price_1T2dlORsNB149jDMOFi1srU3",
-    "STRIPE_SUPERNOVA_PRICE_ID": "price_1T2do0RsNB149jDMqCTT0toh",
-    "STRIPE_GALACTIC_PRICE_ID": "price_1T2dnERsNB149jDMP1oVyzRT",
-    "STRIPE_CUSTOM_PRICE_ID": "price_1T5tBXRsNB149jDMLBCEMKYb",
-    "STRIPE_CUSTOM_MODE": "payment"
+    "STRIPE_SCOUT_PRICE_ID": "price_1Tlw6sRsNB149jDMnBRin9Hl",
+    "STRIPE_SENTINEL_PRICE_ID": "price_1Tlw6VRsNB149jDMttOoywW4",
+    "STRIPE_NEBULA_PRICE_ID": "price_1TWeQPRsNB149jDMKq5bfsn0",
+    "STRIPE_PULSAR_PRICE_ID": "price_1TcA6pRsNB149jDMVhecV5Fh",
+    "STRIPE_SUPERNOVA_PRICE_ID": "price_1TWeQQRsNB149jDMQjakQstG",
+    "STRIPE_GALACTIC_PRICE_ID": "price_1TWeQRRsNB149jDMVyFtXPG3",
+    "STRIPE_CUSTOM_PRICE_ID": "price_1TWQDhRsNB149jDMOzFtXnX4",
+    "STRIPE_CUSTOM_MODE": "payment",
+    "STRIPE_CONTRACTOR_CHECK_PRICE_ID": "price_1Ts4icRsNB149jDMCF4EX4hk",
+    "STRIPE_JOB_SAFETY_SCORE_PRICE_ID": "price_1Ts4icRsNB149jDMCF4EX4hk",
+    "STRIPE_LANDLORD_CHECK_PRICE_ID": "price_1Ts4icRsNB149jDMCF4EX4hk",
+    "SCAN_EMAIL_FROM": "Vortx Scan <scan@vortxmkt.com>",
+    "SUBSTACK_PUBLICATION_URL": "https://vortxmkt.substack.com"
   },
   "compatibility_flags": [
     "nodejs_compat"

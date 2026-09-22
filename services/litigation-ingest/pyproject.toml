@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "litigation-ingest"
+version = "0.1.0"
+description = "Compliance-first public-record ingestion and Friction Score utilities for Vortx."
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+litigation-ingest = "litigation_ingest.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["litigation_ingest*"]

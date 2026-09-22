@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 980" role="img" aria-label="Illustrated silhouette of a generic political figure">
+  <!--
+    Generic politician watermark for Vortx hero.
+    Hollowed-out outline + soft fill. Not a likeness of any named individual.
+  -->
+  <defs>
+    <linearGradient id="vortxPolStroke" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0369a1" stop-opacity="0.42"/>
+      <stop offset="38%" stop-color="#0f172a" stop-opacity="0.28"/>
+      <stop offset="78%" stop-color="#64748b" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#0f172a" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="vortxPolFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f172a" stop-opacity="0.09"/>
+      <stop offset="55%" stop-color="#0369a1" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#0f172a" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="vortxDomeStroke" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#94a3b8" stop-opacity="0"/>
+      <stop offset="45%" stop-color="#64748b" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#94a3b8" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="vortxPolGlow" cx="52%" cy="28%" r="55%">
+      <stop offset="0%" stop-color="#7dd3fc" stop-opacity="0.16"/>
+      <stop offset="55%" stop-color="#bae6fd" stop-opacity="0.04"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Soft atmospheric wash -->
+  <ellipse cx="400" cy="260" rx="260" ry="220" fill="url(#vortxPolGlow)"/>
+
+  <!-- Distant capitol dome suggestion (abstract, not literal architecture) -->
+  <g fill="none" stroke="url(#vortxDomeStroke)" stroke-width="6" stroke-linecap="round">
+    <path d="M120 210c40-110 160-110 200 0"/>
+    <path d="M155 210v48"/>
+    <path d="M220 210v56"/>
+    <path d="M285 210v48"/>
+    <path d="M140 258h180"/>
+  </g>
+
+  <!-- Figure fill -->
+  <g fill="url(#vortxPolFill)">
+    <ellipse cx="430" cy="188" rx="74" ry="88"/>
+    <path d="M292 450c36-108 96-160 138-170 42 10 102 62 138 170 14 98 24 196 32 294H260c8-98 18-196 32-294z"/>
+  </g>
+
+  <!-- Hollow outline: suit + shoulder cut -->
+  <g fill="none" stroke="url(#vortxPolStroke)" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="430" cy="188" rx="78" ry="92"/>
+    <!-- hairline suggestion -->
+    <path d="M360 158c20-52 120-52 140 0"/>
+    <!-- collar / lapel V -->
+    <path d="M398 278c12 30 52 30 64 0"/>
+    <path d="M404 300c10 78 10 156 0 234"/>
+    <path d="M456 300c-10 78-10 156 0 234"/>
+    <!-- shoulders -->
+    <path d="M278 448c30-96 92-148 152-160 60 12 122 64 152 160"/>
+    <!-- arms / coat sides -->
+    <path d="M312 448c18 124 28 228 40 322"/>
+    <path d="M548 448c-18 124-28 228-40 322"/>
+    <!-- hem -->
+    <path d="M352 770c40 42 106 42 146 0"/>
+  </g>
+</svg>

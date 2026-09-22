@@ -1,0 +1,25 @@
+/** Allowlisted marketing/activation funnel steps (no PII in detail). */
+export const TRACK_STEPS = new Set([
+  'page_view',
+  'pricing_view',
+  'checkout_click',
+  'scan_start',
+  'scan_email_submit',
+  'consumer_tool_click',
+  'unlock_cta_click',
+  'locked_card_click',
+  'aup_shown',
+  'aup_accept',
+  'alert_email_submit',
+  'public_proof_view',
+  'checkout_success_view',
+  // Activation funnel (Phase 0)
+  'signup_complete',
+  'free_name_view',
+  'first_watch',
+  'watch_suggest_click',
+  'alert_email_sent',
+  'desk_return',
+  'trial_start',
+  'billing_portal_click',
+])

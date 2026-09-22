@@ -1,0 +1,63 @@
+---
+description: Vortx full-market audience, hooks, channels, and sellability guardrails
+alwaysApply: true
+---
+
+# Vortx audience (all eight market segments)
+
+Vortx sells **public-record legal intelligence** to every segment below. Marketing copy, outbound posts, and sales conversations must speak to **their job** and **their hook**, not generic "risk teams" only.
+
+Full reference: `docs/AUDIENCE.md`. Runbook: `VORTX_RUNBOOK.md` (Audience section).
+
+## Scope split (marketing vs product)
+
+| Surface | Rule | Segments |
+|---------|------|----------|
+| **Marketing, growth, outbound** | This file | All eight below |
+| **In-app product** (Litigation Lightning dashboard) | `Vortx-Litigation-Lightning.mdc` | B2B subscription only — debt collectors, law firms, credit/risk, competitive intel |
+
+- No prediction markets, wagering, or casino-style UI in the product.
+- Retail/trader/TikTok angles are **awareness and lead gen** only — route to free queue, pricing, or B2B tiers; never in-dashboard speculation features.
+- Segment 8 (Credit & vendor risk) is the **primary in-app buyer**; segments 1–7 drive top-of-funnel and enterprise discovery.
+
+## Segments (always consider all eight)
+
+| # | Segment | Job-to-be-done | Primary hook (lead with this angle) | Reach | Marketing vs product |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Retail investors & day traders | Due diligence before taking/holding a position | Before you hold a position in [company], here's what the public record shows… | X, Reddit (r/investing, r/WallStreetBets), StockTwits, trading Discord | **Marketing only** — free queue + education; never trading advice |
+| 2 | Small business owners | Vet vendors/suppliers/clients before contracts | Before you sign a 6-figure contract, run these 3 public record checks. | LinkedIn, local biz Facebook, email | **Marketing + SMB tier** — Operator/Professional upsell |
+| 3 | Journalists & researchers | Find stories before they break | The story ran March 22. The WARN notice was February 28. The record was public. | Press Gazette, journalism X, ProPublica-adjacent | **Marketing** — timelines + source URLs for fact-checking |
+| 4 | Real estate pros | Title/transaction lien due diligence | Lien clusters show up before the default story. Here's what to watch. | BiggerPockets, RE LinkedIn groups | **Marketing + Pulsar tier** — county/lien watchlists |
+| 5 | Paralegals & legal ops | Pre-litigation research, counterparty vetting | The adversary proceeding started in January. The public record showed the strain in October. | LinkedIn, CLOC, ACC | **Marketing + product** — **highest Pro ($1,500/mo) conversion** |
+| 6 | HR & workforce pros | Competitor WARN / sector layoff trends | Your competitor filed a WARN notice. The public knew before your team did. | SHRM, HR LinkedIn | **Marketing + alerts** — jurisdiction/sector filters |
+| 7 | Curious general public | Understand companies in their area/portfolio | Did you know this information is public and updated daily? Most people don't. | X, Reddit, TikTok awareness | **Marketing only** — virality / word-of-mouth; no consumer speculation |
+| 8 | Credit & vendor risk teams | Monitor counterparties before quarterly reviews and portfolio decisions | Receipts before the quarterly review. | Enterprise email, credit/risk LinkedIn, vendor management forums | **Marketing + product** — **core B2B dashboard buyer** |
+
+## Per-segment copy rules
+
+- **1 Investors:** Always append "research only / not trading advice." Free signal queue → paid source links.
+- **2 SMB:** Emphasize 3-check workflow before contracts. Operator tier for few counterparties; Professional for teams.
+- **3 Journalism:** Lead with **dated receipts** (WARN date vs story date). Timelines + jurisdiction filters.
+- **4 Real estate:** County/lien coverage in source transparency; watchlists per property or borrower entity.
+- **5 Legal ops:** Entity timelines, evidence packets, CSV export, API on Galactic. Professional research workflow — not outcome prediction.
+- **6 HR:** WARN record types, sector filters, sticky monitoring alerts.
+- **7 General public:** Top-of-funnel education; route to free queue without consumer speculation language.
+- **8 Credit/risk:** Enterprise tone — friction scores, watchlists, exports, audit trail. Aligns with Litigation Lightning dashboard.
+
+## Universal copy rules (all segments)
+
+- Lead with **dated public artifacts** (WARN, lien, docket, notice); not outcomes, guilt, or trade calls.
+- Tie each CTA to **unlock**: source links, timelines, watchlists, alerts, exports.
+- Never imply trading advice, guaranteed returns, or that a record proves wrongdoing (see `Vortx-Glassmorphic-UI.mdc` and runbook compliance).
+- Avoid banned claims: buy/sell/short, scam/exposed/guilty, "risk-free trial" unless real.
+
+## Implementation touchpoints
+
+When changing marketing or growth surfaces, update together when relevant:
+
+- `frontend/.prod-reference.js` → then sync to `frontend/dist/assets/index-C-ubd9Cu.js` via `node scripts/sync-approved-bundle.mjs`
+- `frontend/src/App.tsx` (source for future builds)
+- `scripts/ensure-patched-dist.mjs` (meta/OG)
+- `worker/x-marketing-cron.js` (X templates + Ollama prompt)
+- `frontend/functions/api/request-access.js` (`use_case` values)
+- `docs/AUDIENCE.md`, `VORTX_RUNBOOK.md`

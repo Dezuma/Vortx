@@ -1,0 +1,40 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "vortx-ingest-cron",
+  "main": "./worker/ingest-cron.js",
+  "compatibility_date": "2026-05-01",
+  "workers_dev": true,
+  "observability": {
+    "enabled": true
+  },
+  "triggers": {
+    "crons": [
+      "17 * * * *"
+    ]
+  },
+  "vars": {
+    "VITE_SUPABASE_URL": "https://gejjtdrqyahajtijvghb.supabase.co",
+    "PUBLIC_SITE_URL": "https://vortxmkt.com",
+    "CASE_DRAFTS_ENABLED": "true",
+    "CASE_DRAFT_WARN_MIN_SEVERITY": "65",
+    "CASE_DRAFT_TRADE_MIN_SEVERITY": "78",
+    "CASE_DRAFT_FORM4_MIN_AMOUNT": "100000",
+    "CASE_DRAFT_CONGRESS_MIN_AMOUNT": "50000",
+    "CASE_DRAFT_MAX_PER_RUN": "5",
+    "CASE_DRAFT_WARN_MAX_PER_RUN": "5",
+    "CASE_DRAFT_TRADE_MAX_PER_RUN": "0",
+    "CASE_DRAFT_WARN_LOOKBACK_DAYS": "120",
+    "DISCORD_BOT_ENABLED": "true",
+    "DISCORD_BOT_DRY_RUN": "false",
+    "DISCORD_INGEST_POSTS_ENABLED": "true",
+    "DISCORD_INGEST_LOOKBACK_HOURS": "3",
+    "DISCORD_WARN_MAX_PER_RUN": "4",
+    "DISCORD_TRADE_MAX_PER_RUN": "3",
+    "DISCORD_TRADE_FORM4_MIN_AMOUNT": "100000",
+    "DISCORD_TRADE_CONGRESS_MIN_AMOUNT": "50000",
+    "DISCORD_TRADE_MIN_SEVERITY": "78",
+    "DISCORD_CLUSTER_BUY_MIN": "3",
+    "DISCORD_CLUSTER_BUY_DAYS": "7",
+    "RETENTION_ENABLED": "true"
+  }
+}
