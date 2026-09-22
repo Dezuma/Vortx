@@ -208,6 +208,81 @@ Manual trigger on the deployed Worker: `POST /reddit/run` (add `?dry=1` for a dr
 
 Note: accounts posting to Reddit via the API should be flaired/approved in the subreddit and follow its rules; the digest format is compliance-safe (public records, no wrongdoing claims).
 
+## Substack spotlight draft
+
+The daily X spotlight also becomes a **Substack draft** (not an auto-send). Same company, research-only copy, composer URL for review.
+
+```env
+SUBSTACK_SID=
+SUBSTACK_PUBLICATION_URL=https://vortxmkt.substack.com
+SUBSTACK_MARKETING_DRAFT=true
+SUBSTACK_MARKETING_PUBLISH=false
+```
+
+`npm run marketing:preview` now includes a `substack` object. Manual: `POST /substack/run` with `x-run-token` and a JSON spotlight, or `npm run substack:preview -- --name "Acme"`.
+
+## ByBizu announcements (not the Form 4 firehose)
+
+Stream start / new YouTube upload can cross-post a **link + title** to Discord `#announcements`, X, and the FemaleSpace1 Facebook page. Litigation cards stay on Vortx channels.
+
+```env
+DISCORD_ANNOUNCEMENTS_WEBHOOK_URL=
+ANNOUNCE_ENABLED=true
+```
+
+```bash
+npm run announce:preview -- --title "New episode" --url https://www.youtube.com/@ByBizu
+```
+
+Manual Worker: `POST /announce` with `{ "kind": "youtube"|"live"|"vod", "url": "https://...", "title": "...", "platform": "youtube"|"kick"|"twitch" }`.
+
+vibe-clips writes the same copy after each edit:
+
+```text
+social/youtube-short.mp4
+social/tiktok-hook.mp4
+social/going-live.txt
+social/announce.json
+```
+
+```bash
+cd /home/dbz/vibe-seo/tools/video-automation
+./vibe-clips --social-pack --latest
+```
+
+## Kick + Twitch live alerts
+
+Daily cron checks `kick.com/bybizu` and Twitch Helix for `bybizu_`. Newly live streams fire the announcement pack once per stream id. No VODs-as-legal-teasers.
+
+```env
+LIVE_ALERTS_ENABLED=true
+KICK_LOGIN=bybizu
+TWITCH_LOGIN=bybizu_
+TWITCH_CLIENT_ID=
+TWITCH_CLIENT_SECRET=
+```
+
+```bash
+npm run live:preview
+```
+
+`POST /live/check` with the run token.
+
+## Facebook FemaleSpace1 weekly story
+
+Monday 14:17 UTC posts a **ByBizu story** (YouTube link), not a Vortx Form 4 card. Set `FACEBOOK_WEEKLY_BRAND=vortx` only if that page should carry a research-only desk teaser.
+
+```env
+FACEBOOK_WEEKLY_ENABLED=true
+FACEBOOK_WEEKLY_BRAND=bybizu
+FACEBOOK_PAGE_ID=
+FACEBOOK_PAGE_ACCESS_TOKEN=
+```
+
+`POST /facebook/run` forces a post on any weekday (still needs the page token).
+
+What this stack will not do: scrape Discord/YouTube, auto-DM, or comment-spam.
+
 ## Local Dry Run
 
 ```bash

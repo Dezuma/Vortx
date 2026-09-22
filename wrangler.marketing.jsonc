@@ -27,6 +27,20 @@
     "DISCORD_BOT_DRY_RUN": "false",
     "REDDIT_BOT_ENABLED": "false",
     "REDDIT_BOT_DRY_RUN": "true",
-    "REDDIT_SUBREDDIT": "VortxUnredacted"
+    "REDDIT_SUBREDDIT": "VortxUnredacted",
+    "SUBSTACK_PUBLICATION_URL": "https://vortxmkt.substack.com",
+    "SUBSTACK_MARKETING_DRAFT": "true",
+    "SUBSTACK_MARKETING_PUBLISH": "false",
+    "ANNOUNCE_ENABLED": "true",
+    "LIVE_ALERTS_ENABLED": "true",
+    "FACEBOOK_WEEKLY_ENABLED": "true",
+    "FACEBOOK_WEEKLY_BRAND": "bybizu",
+    "TWITCH_LOGIN": "bybizu_",
+    "KICK_LOGIN": "bybizu",
+    "BYBIZU_YOUTUBE_URL": "https://www.youtube.com/@ByBizu",
+    "BYBIZU_TIKTOK_URL": "https://www.tiktok.com/@bybizu",
+    "BYBIZU_KICK_URL": "https://kick.com/bybizu",
+    "BYBIZU_TWITCH_URL": "https://www.twitch.tv/bybizu_",
+    "FEMALESPACE_FACEBOOK_URL": "https://www.facebook.com/FemaleSpace1"
   }
 }

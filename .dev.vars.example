@@ -51,6 +51,27 @@ DISCORD_CASES_WEBHOOK_URL=
 # SUBSTACK_SID=
 # SUBSTACK_PUBLISH_ON_APPROVE=false
 # SUBSTACK_PUBLICATION_URL=https://vortxmkt.substack.com
+# SUBSTACK_MARKETING_DRAFT=true
+# SUBSTACK_MARKETING_PUBLISH=false
+
+# ByBizu announcements + Kick/Twitch live alerts (never scrape or auto-DM)
+# DISCORD_ANNOUNCEMENTS_WEBHOOK_URL=
+# DISCORD_WELCOME_WEBHOOK_URL=
+# ANNOUNCE_ENABLED=true
+# LIVE_ALERTS_ENABLED=true
+# TWITCH_LOGIN=bybizu_
+# KICK_LOGIN=bybizu
+# TWITCH_CLIENT_ID=
+# TWITCH_CLIENT_SECRET=
+# FACEBOOK_WEEKLY_ENABLED=true
+# FACEBOOK_WEEKLY_BRAND=bybizu
+# FACEBOOK_PAGE_ID=
+# FACEBOOK_PAGE_ACCESS_TOKEN=
+# BYBIZU_YOUTUBE_URL=https://www.youtube.com/@ByBizu
+# BYBIZU_TIKTOK_URL=https://www.tiktok.com/@bybizu
+# BYBIZU_KICK_URL=https://kick.com/bybizu
+# BYBIZU_TWITCH_URL=https://www.twitch.tv/bybizu_
+# FEMALESPACE_FACEBOOK_URL=https://www.facebook.com/FemaleSpace1
 
 # Discord THE VAULT (locked channels)
 DISCORD_UNFILTERED_SIGNALS_WEBHOOK_URL=

@@ -23,6 +23,14 @@ import {
   recordMarketingPost,
 } from './marketing-dedup.js'
 import { resolveRedditCron, runRedditWeekly } from './reddit-weekly.js'
+import {
+  draftMarketingSubstack,
+  postAnnouncement,
+  reachHealth,
+  runDailyReach,
+  runFacebookWeekly,
+  runLiveAlerts,
+} from './reach-distribution.js'
 
 const DEFAULT_SITE = 'https://vortxmkt.com'
 const POST_MAX_LENGTH = 270
@@ -1256,6 +1264,11 @@ export async function runMarketingBot(env, options = {}) {
     }
   }
 
+  const substack = await draftMarketingSubstack(env, stats.spotlight || stats.marketingLead, {
+    dryRun,
+    siteUrl: site,
+  })
+
   if (dryRun) {
     const discordPreview = await runDiscordSignalBot(env, { force: true })
     return {
@@ -1272,6 +1285,7 @@ export async function runMarketingBot(env, options = {}) {
       trend_hashtags: campaign.trendHashtags,
       trend_matched: campaign.trendMatched,
       marketing_lead: campaign.marketingLead,
+      substack,
     }
   }
 
@@ -1286,6 +1300,7 @@ export async function runMarketingBot(env, options = {}) {
     image_status: imageStatus,
     tweet_id: tweet?.data?.id || null,
     spotlight_company: campaign.spotlightName,
+    substack,
   }
 }
 
@@ -1339,14 +1354,24 @@ export default {
         }
 
         let marketing = null
+        let reach = null
         if (crons.includes('17 14 * * *')) {
           try {
             marketing = await runMarketingBot(env)
           } catch (error) {
             marketing = { ok: false, error: error.message }
           }
+          try {
+            reach = await runDailyReach(env, {
+              spotlight: marketing?.stats?.spotlight || marketing?.stats?.marketingLead || null,
+              dryRun: bool(env.MARKETING_BOT_DRY_RUN, true),
+              postTweet: (tweetEnv, text) => postTweet(tweetEnv, text, []),
+            })
+          } catch (error) {
+            reach = { ok: false, error: error.message }
+          }
         }
-        return { discord, marketing, reddit }
+        return { discord, marketing, reddit, reach }
       })(),
     )
   },
@@ -1389,6 +1414,7 @@ export default {
             String(env.REDDIT_USERNAME || '').trim() &&
             String(env.REDDIT_PASSWORD || '').trim(),
         ),
+        ...reachHealth(env),
       })
     }
 
@@ -1434,8 +1460,75 @@ export default {
       }
     }
 
+    if (url.pathname === '/announce' && request.method === 'POST') {
+      if (!authorizedRunToken(request, env)) return json({ ok: false, error: 'unauthorized' }, { status: 401 })
+      try {
+        const body = await readJsonBody(request)
+        const dryRun = url.searchParams.get('dry') === '1' || bool(env.MARKETING_BOT_DRY_RUN, true)
+        return json(
+          await postAnnouncement(env, body, {
+            force: true,
+            dryRun,
+            postTweet: (tweetEnv, text) => postTweet(tweetEnv, text, []),
+          }),
+        )
+      } catch (error) {
+        return json({ ok: false, error: error.message }, { status: 500 })
+      }
+    }
+
+    if (url.pathname === '/live/check' && request.method === 'POST') {
+      if (!authorizedRunToken(request, env)) return json({ ok: false, error: 'unauthorized' }, { status: 401 })
+      try {
+        const dryRun = url.searchParams.get('dry') === '1' || bool(env.MARKETING_BOT_DRY_RUN, true)
+        return json(
+          await runLiveAlerts(env, {
+            force: true,
+            dryRun,
+            postTweet: (tweetEnv, text) => postTweet(tweetEnv, text, []),
+          }),
+        )
+      } catch (error) {
+        return json({ ok: false, error: error.message }, { status: 500 })
+      }
+    }
+
+    if (url.pathname === '/substack/run' && request.method === 'POST') {
+      if (!authorizedRunToken(request, env)) return json({ ok: false, error: 'unauthorized' }, { status: 401 })
+      try {
+        const body = await readJsonBody(request)
+        const dryRun = url.searchParams.get('dry') === '1' || bool(env.MARKETING_BOT_DRY_RUN, true)
+        const spotlight = body.spotlight || body
+        return json(await draftMarketingSubstack(env, spotlight, { force: true, dryRun }))
+      } catch (error) {
+        return json({ ok: false, error: error.message }, { status: 500 })
+      }
+    }
+
+    if (url.pathname === '/facebook/run' && request.method === 'POST') {
+      if (!authorizedRunToken(request, env)) return json({ ok: false, error: 'unauthorized' }, { status: 401 })
+      try {
+        const body = await readJsonBody(request)
+        const dryRun = url.searchParams.get('dry') === '1' || bool(env.MARKETING_BOT_DRY_RUN, true)
+        return json(
+          await runFacebookWeekly(env, body.spotlight || null, { dryRun, date: new Date(), force: true }),
+        )
+      } catch (error) {
+        return json({ ok: false, error: error.message }, { status: 500 })
+      }
+    }
+
     return json({ ok: false, error: 'not_found' }, { status: 404 })
   },
+}
+
+async function readJsonBody(request) {
+  try {
+    const body = await request.json()
+    return body && typeof body === 'object' ? body : {}
+  } catch {
+    return {}
+  }
 }
 
 /** Shared by case publish distribution (Discord PNG + X). */

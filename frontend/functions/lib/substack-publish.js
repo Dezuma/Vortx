@@ -80,14 +80,62 @@ async function substackFetch(publicationUrl, path, { cookie, method = 'GET', bod
   return payload
 }
 
+function sanitizeSpotlightName(value) {
+  return String(value || 'Public record')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 80)
+}
+
 /**
- * Create a Substack draft (and optionally publish) for a case story.
- * @returns {Promise<object>}
+ * Newsletter copy from the same spotlight the X marketing bot uses.
+ * Draft-only by default — marketing never auto-sends to the list.
  */
-export async function publishCaseToSubstack(env, story, siteUrl) {
+export function buildSpotlightSubstackPost(spotlight, { siteUrl, ctaUrl } = {}) {
+  const name = sanitizeSpotlightName(spotlight?.name)
+  const recordType = String(
+    spotlight?.event_type || spotlight?.recordType || spotlight?.record_type || 'public record',
+  )
+    .replaceAll('_', ' ')
+    .trim()
+  const jurisdiction = String(spotlight?.jurisdiction || 'US').trim() || 'US'
+  const scoreRaw = Number(spotlight?.score ?? spotlight?.severity ?? 0)
+  const score = Number.isFinite(scoreRaw) && scoreRaw > 0 ? Math.round(Math.min(100, scoreRaw)) : null
+  const filing = String(spotlight?.filing_date || spotlight?.filingDate || '').slice(0, 10)
+  const base = String(siteUrl || 'https://vortxmkt.com').replace(/\/$/, '')
+  const deskUrl = String(ctaUrl || `${base}/?view=pricing`)
+  const signalUrl = spotlight?.slug ? `${base}/signal/${spotlight.slug}` : deskUrl
+  const title = `${name}: public record, not the headline`
+  const subtitle = [recordType, jurisdiction, score != null ? `score ${score}/100` : null, filing || null]
+    .filter(Boolean)
+    .join(' · ')
+  const body = [
+    `The dated filing on ${name} is already in the public queue.`,
+    'What is free: record type, jurisdiction, and the friction score.',
+    'What stays on the desk: source URL, timeline, watchlists, and exports.',
+    filing ? `Filing date on record: ${filing}.` : null,
+    `Desk and pricing: ${deskUrl}`,
+    spotlight?.slug ? `Signal card: ${signalUrl}` : null,
+    'Records are allegations or administrative artifacts, not judgments. Research only, not legal or financial advice.',
+  ]
+    .filter(Boolean)
+    .join('\n\n')
+
+  return {
+    title,
+    subtitle,
+    body,
+    full_text: `${title}\n\n${subtitle}\n\n${body}`,
+  }
+}
+
+/**
+ * Create a Substack draft (and optionally publish) from title/subtitle/body.
+ * Marketing callers must pass publish:false so the list is not auto-sent.
+ */
+export async function draftPlainPostToSubstack(env, post, { publish = false } = {}) {
   const publicationUrl = substackPublicationUrl(env)
   const composerUrl = `${publicationUrl}/publish/post?type=newsletter`
-  const post = buildSubstackPost(story, siteUrl)
   const cookie = substackSessionCookie(env)
 
   if (!cookie) {
@@ -113,14 +161,13 @@ export async function publishCaseToSubstack(env, story, siteUrl) {
       },
     })
     const draftId = draft?.id || draft?.draft_id || null
-    const shouldPublish = bool(env.SUBSTACK_PUBLISH_ON_APPROVE, true)
 
-    if (!shouldPublish || !draftId) {
+    if (!publish || !draftId) {
       return {
         posted: false,
         drafted: true,
         draft_id: draftId,
-        reason: shouldPublish ? 'draft_created_missing_id' : 'draft_only',
+        reason: publish ? 'draft_created_missing_id' : 'draft_only',
         publication_url: publicationUrl,
         composer_url: composerUrl,
         draft_url: draftId ? `${publicationUrl}/publish/post/${draftId}` : composerUrl,
@@ -157,4 +204,31 @@ export async function publishCaseToSubstack(env, story, siteUrl) {
       post,
     }
   }
+}
+
+export async function draftSpotlightToSubstack(env, spotlight, options = {}) {
+  const post = buildSpotlightSubstackPost(spotlight, options)
+  if (options.dryRun) {
+    return {
+      posted: false,
+      drafted: false,
+      dry_run: true,
+      reason: 'dry_run',
+      publication_url: substackPublicationUrl(env),
+      composer_url: `${substackPublicationUrl(env)}/publish/post?type=newsletter`,
+      post,
+    }
+  }
+  const publish = bool(options.publish ?? env.SUBSTACK_MARKETING_PUBLISH, false)
+  return draftPlainPostToSubstack(env, post, { publish })
+}
+
+/**
+ * Create a Substack draft (and optionally publish) for a case story.
+ * @returns {Promise<object>}
+ */
+export async function publishCaseToSubstack(env, story, siteUrl) {
+  const post = buildSubstackPost(story, siteUrl)
+  const shouldPublish = bool(env.SUBSTACK_PUBLISH_ON_APPROVE, true)
+  return draftPlainPostToSubstack(env, post, { publish: shouldPublish })
 }

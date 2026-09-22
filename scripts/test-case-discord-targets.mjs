@@ -6,6 +6,7 @@ import {
   resolveCaseDiscordWebhooks,
 } from '../frontend/functions/lib/case-discord-targets.js'
 import {
+  buildSpotlightSubstackPost,
   plainTextToSubstackHtml,
   substackAutoPublishRequested,
   substackConfigured,
@@ -118,5 +119,13 @@ assert.equal(
 )
 assert.equal(substackPublishOnApproveEnabled({ SUBSTACK_SID: 's%3Atest' }), true)
 assert.match(plainTextToSubstackHtml('Hello\n\nWorld'), /<p>Hello<\/p><p>World<\/p>/)
+const spotlightPost = buildSpotlightSubstackPost({
+  name: 'Acme Logistics',
+  event_type: 'warn_notice',
+  jurisdiction: 'US-TX',
+  score: 81,
+})
+assert.match(spotlightPost.title, /Acme Logistics/)
+assert.match(spotlightPost.body, /Research only/)
 
 console.log('case-discord-targets + substack helpers: ok')
