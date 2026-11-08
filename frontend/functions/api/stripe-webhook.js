@@ -1,4 +1,4 @@
-import { hasSupabase, json, supabaseRest } from '../lib/supabase-rest.js'
+import { hasSupabase, json, PAID_PLANS, supabaseRest } from '../lib/supabase-rest.js'
 import { parseEntityIdList, queueScanWatchlistSetup } from '../lib/scan-watchlist.js'
 import { sendSubscriptionWelcomeEmail } from '../lib/transactional-email.js'
 import { upsertCheckoutSessionRow } from '../lib/checkout-session-store.js'
@@ -25,10 +25,53 @@ const PLAN_BY_PRICE_ENV = {
 const ONE_TIME_UNLOCK_PLANS = new Set(['contractor_unlock', 'job_safety_unlock', 'landlord_unlock'])
 
 function planFromEnvPrice(env, priceId) {
+  const id = String(priceId || '').trim()
+  if (!id) return ''
   for (const [key, plan] of Object.entries(PLAN_BY_PRICE_ENV)) {
-    if (String(env[key] || '').trim() === priceId) return plan
+    if (String(env[key] || '').trim() === id) return plan
   }
-  return 'nebula'
+  return ''
+}
+
+/**
+ * Subscription id carried by a billing event.
+ * Invoices use `subscription`; subscription objects use `id`.
+ * One-time invoices have no subscription id.
+ */
+export function stripeSubscriptionIdFromEvent(type, object) {
+  if (type === 'invoice.payment_failed') {
+    const subscription = object?.subscription
+    if (typeof subscription === 'string') return subscription.trim()
+    if (subscription && typeof subscription === 'object') return String(subscription.id || '').trim()
+    return ''
+  }
+  return String(object?.id || '').trim()
+}
+
+/**
+ * Status writes apply only to the subscription stored on the profile.
+ * checkout.session.completed switches stripe_subscription_id when a new
+ * checkout starts. Events for a previous subscription must not cancel,
+ * mark past_due, or rewrite the plan of the subscription still on file.
+ * Events with no subscription id (one-time unlock invoices) never change it.
+ * Profiles that have not stored a subscription id yet still accept the event.
+ */
+export function subscriptionStatusEventApplies(profile, eventSubscriptionId) {
+  const incoming = String(eventSubscriptionId || '').trim()
+  if (!incoming) return false
+  const current = String(profile?.stripe_subscription_id || '').trim()
+  if (!current) return true
+  return current === incoming
+}
+
+/** Plan slug from subscription metadata or a mapped price. Unknown prices do not change the plan. */
+export function resolveSubscriptionPlan(env, object) {
+  const fromMeta = String(object?.metadata?.plan || '').trim()
+  if (fromMeta && PAID_PLANS.has(fromMeta) && !ONE_TIME_UNLOCK_PLANS.has(fromMeta)) return fromMeta
+  const priceId = object?.items?.data?.[0]?.price?.id || object?.items?.data?.[0]?.price || ''
+  const fromPrice = planFromEnvPrice(env, priceId)
+  if (!fromPrice || ONE_TIME_UNLOCK_PLANS.has(fromPrice) || !PAID_PLANS.has(fromPrice)) return ''
+  return fromPrice
 }
 
 async function hmacSha256(secret, payload) {
@@ -76,6 +119,16 @@ async function verifyStripeSignature(request, env, rawBody) {
   const signed = `${timestamp}.${rawBody}`
   const expected = await hmacSha256(secret, signed)
   return timingSafeEqual(expected, signature)
+}
+
+async function loadProfileByEmail(env, email) {
+  const normalized = String(email || '').trim().toLowerCase()
+  if (!normalized) return null
+  const rows = await supabaseRest(
+    env,
+    `app_profiles?select=user_id,email,plan,subscription_status,stripe_customer_id,stripe_subscription_id&email=eq.${encodeURIComponent(normalized)}&limit=1`,
+  )
+  return rows?.[0] || null
 }
 
 async function profileEmailForStripeCustomer(env, customerId) {
@@ -236,20 +289,24 @@ export async function onRequestPost({ request, env }) {
           : object.status === 'past_due'
             ? 'past_due'
             : 'canceled'
-      const plan = String(object.metadata?.plan || planFromEnvPrice(env, object.items?.data?.[0]?.price?.id || ''))
-      if (email) {
+      const plan = resolveSubscriptionPlan(env, object)
+      const eventSubscriptionId = stripeSubscriptionIdFromEvent(type, object)
+      const profile = email ? await loadProfileByEmail(env, email) : null
+      const applies = Boolean(email && profile && subscriptionStatusEventApplies(profile, eventSubscriptionId))
+      if (applies) {
+        const patch = {
+          subscription_status: status,
+          stripe_customer_id: object.customer,
+          stripe_subscription_id: eventSubscriptionId,
+          updated_at: new Date().toISOString(),
+        }
+        if (plan) patch.plan = plan
         await supabaseRest(env, `app_profiles?email=eq.${encodeURIComponent(email.toLowerCase())}`, {
           method: 'PATCH',
-          body: JSON.stringify({
-            plan,
-            subscription_status: status,
-            stripe_customer_id: object.customer,
-            stripe_subscription_id: object.id,
-            updated_at: new Date().toISOString(),
-          }),
+          body: JSON.stringify(patch),
         })
       }
-      if (status === 'trialing' && type === 'customer.subscription.created') {
+      if (applies && status === 'trialing' && type === 'customer.subscription.created') {
         try {
           const { recordMarketingStep } = await import('./marketing-track.js')
           await recordMarketingStep(env, {
@@ -265,7 +322,9 @@ export async function onRequestPost({ request, env }) {
 
     if (type === 'customer.subscription.deleted' || type === 'invoice.payment_failed') {
       const email = await resolveSubscriberEmail(env, object)
-      if (email) {
+      const eventSubscriptionId = stripeSubscriptionIdFromEvent(type, object)
+      const profile = email ? await loadProfileByEmail(env, email) : null
+      if (email && profile && subscriptionStatusEventApplies(profile, eventSubscriptionId)) {
         await supabaseRest(env, `app_profiles?email=eq.${encodeURIComponent(email.toLowerCase())}`, {
           method: 'PATCH',
           body: JSON.stringify({

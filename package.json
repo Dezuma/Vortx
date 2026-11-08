@@ -12,6 +12,7 @@
     "ops:check": "node scripts/ops-check.mjs",
     "ops:funnel-report": "node scripts/funnel-report.mjs",
     "ops:verify-stripe-webhook": "node scripts/verify-stripe-webhook.mjs",
+    "test:stripe-webhook-subscription": "node scripts/test-stripe-webhook-subscription.mjs",
     "ops:sync-stripe-checkouts": "node scripts/sync-stripe-checkout-sessions.mjs",
     "ops:register-stripe-webhook": "node scripts/register-stripe-webhook.mjs",
     "ops:verify-subscriptions": "node scripts/verify-subscriptions-email.mjs",
