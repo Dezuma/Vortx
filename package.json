@@ -29,6 +29,7 @@
     "test:contractor-check": "node scripts/test-contractor-check.mjs",
     "test:contractor-check:prod": "node scripts/test-contractor-check-prod.mjs",
     "test:ingest-liens": "node scripts/test-ingest-liens.mjs",
+    "test:ingest-event-types": "node scripts/test-ingest-event-types.mjs",
     "audit:contractor-check": "node scripts/audit-contractor-check.mjs",
     "test:job-safety-score": "node scripts/test-job-safety-score.mjs",
     "test:warn-notice": "node scripts/test-warn-notice.mjs",
