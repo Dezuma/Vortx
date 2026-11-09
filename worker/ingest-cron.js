@@ -553,14 +553,26 @@ function financialLabel(eventType) {
   return 'Court record'
 }
 
-function storageEventType(eventType) {
-  if (eventType === 'notice_of_intent') return 'notice_of_intent'
-  if (eventType === 'mechanics_lien') return 'mechanics_lien'
-  if (eventType === 'form_4') return 'form_4'
-  if (eventType === 'congress_trade') return 'congress_trade'
-  if (eventType === 'institutional_13f') return 'institutional_13f'
-  if (eventType === 'warn_notice') return 'warn_notice'
-  return 'civil_docket'
+/** Types allowed by legal_events_event_type_check. Unknown values stay civil_docket. */
+const STORED_EVENT_TYPES = new Set([
+  'warn_notice',
+  'mechanics_lien',
+  'notice_of_intent',
+  'civil_docket',
+  'bankruptcy_docket',
+  'bankruptcy_chapter_11',
+  'bankruptcy_chapter_7',
+  'bankruptcy_adversary',
+  'receivership',
+  'creditor_dispute',
+  'regulatory_notice',
+  'form_4',
+  'congress_trade',
+  'institutional_13f',
+])
+
+export function storageEventType(eventType) {
+  return STORED_EVENT_TYPES.has(eventType) ? eventType : 'civil_docket'
 }
 
 function sourceHasRequiredAuth(source, env) {
