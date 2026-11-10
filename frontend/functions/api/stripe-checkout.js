@@ -1,5 +1,6 @@
 import { parseEntityIdList } from '../lib/scan-watchlist.js'
 import { upsertCheckoutSessionRow } from '../lib/checkout-session-store.js'
+import { bearerToken, supabaseAuthUser } from '../lib/supabase-rest.js'
 
 const plans = {
   scout: {
@@ -80,6 +81,25 @@ function validEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim())
 }
 
+/**
+ * Bind checkout to an account only when the signed-in user matches.
+ * A logged-out request may still start Checkout, but its body email is
+ * not copied into Stripe metadata. The webhook then refuses to rewrite
+ * a profile that already has a live subscription.
+ */
+export function resolveCheckoutOwner(sessionUser, requestedEmail) {
+  const requested = validEmail(requestedEmail) ? String(requestedEmail).trim().toLowerCase() : ''
+  if (!sessionUser) return { ok: true, ownerEmail: '', userId: '' }
+
+  const sessionEmail = String(sessionUser.email || '').trim().toLowerCase()
+  const userId = String(sessionUser.id || '').trim()
+  if (!sessionEmail || !userId) {
+    return requested ? { ok: false, error: 'session_email_missing' } : { ok: true, ownerEmail: '', userId: '' }
+  }
+  if (requested && requested !== sessionEmail) return { ok: false, error: 'owner_email_mismatch' }
+  return { ok: true, ownerEmail: sessionEmail, userId }
+}
+
 async function persistCheckoutSession(env, row) {
   await upsertCheckoutSessionRow(env, row)
 }
@@ -135,7 +155,38 @@ export async function onRequestPost({ request, env }) {
   const customMode = plan.modeEnv ? String(env[plan.modeEnv] || '').trim() : ''
   const mode = isMode(customMode) ? customMode : plan.mode
   const origin = getOrigin(request, env)
-  const ownerEmail = validEmail(body.owner_email) ? String(body.owner_email).trim().toLowerCase() : ''
+
+  const token = bearerToken(request)
+  let sessionUser = null
+  if (token) {
+    try {
+      sessionUser = await supabaseAuthUser(env, token)
+    } catch (error) {
+      const unconfigured = error?.message === 'supabase_auth_unconfigured'
+      return json(
+        {
+          ok: false,
+          error: unconfigured ? 'supabase_unconfigured' : 'invalid_session',
+          message: unconfigured
+            ? 'Sign-in is not configured.'
+            : 'Log in again before checkout.',
+        },
+        { status: unconfigured ? 503 : 401 },
+      )
+    }
+  }
+  const owner = resolveCheckoutOwner(sessionUser, body.owner_email)
+  if (!owner.ok) {
+    return json(
+      {
+        ok: false,
+        error: owner.error,
+        message: 'Checkout email does not match the signed-in account.',
+      },
+      { status: 403 },
+    )
+  }
+  const ownerEmail = owner.ownerEmail
   const scanEntityIds = parseEntityIdList(body.scan_entity_ids || body.entity_ids || [])
   const acceptedAt = String(body.acceptable_use_accepted_at || new Date().toISOString())
   const returnPath = String(body.return_path || '').trim() || '/pricing'
@@ -179,8 +230,10 @@ export async function onRequestPost({ request, env }) {
   if (ownerEmail) {
     form.set('customer_email', ownerEmail)
     form.set('metadata[owner_email]', ownerEmail)
+    form.set('metadata[user_id]', owner.userId)
     if (mode === 'subscription') {
       form.set('subscription_data[metadata][owner_email]', ownerEmail)
+      form.set('subscription_data[metadata][user_id]', owner.userId)
       form.set('subscription_data[metadata][plan]', planId)
       if (scanEntityIds.length) {
         form.set('subscription_data[metadata][scan_entity_ids]', scanEntityIds.join(','))

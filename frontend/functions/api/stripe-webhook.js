@@ -23,6 +23,27 @@ const PLAN_BY_PRICE_ENV = {
 }
 
 const ONE_TIME_UNLOCK_PLANS = new Set(['contractor_unlock', 'job_safety_unlock', 'landlord_unlock'])
+const LIVE_SUBSCRIPTION_STATUSES = new Set(['active', 'trialing', 'past_due'])
+
+/**
+ * checkout.session.completed may rewrite a profile when the payer proved
+ * they are that account, or when the profile has never had a live
+ * subscription. An unverified email — metadata or the address typed into
+ * Stripe Checkout — must not replace a paying customer's plan or Stripe ids.
+ */
+export function checkoutActivationApplies(profile, verifiedUserId = '') {
+  if (!profile) return true
+  const currentUser = String(profile.user_id || '').trim()
+  const claimed = String(verifiedUserId || '').trim()
+  if (claimed && currentUser && claimed === currentUser) return true
+  if (claimed && currentUser && claimed !== currentUser) return false
+  if (String(profile.stripe_customer_id || '').trim() || String(profile.stripe_subscription_id || '').trim()) {
+    return false
+  }
+  const status = String(profile.subscription_status || '').trim().toLowerCase()
+  if (LIVE_SUBSCRIPTION_STATUSES.has(status)) return false
+  return true
+}
 
 function planFromEnvPrice(env, priceId) {
   for (const [key, plan] of Object.entries(PLAN_BY_PRICE_ENV)) {
@@ -125,21 +146,27 @@ async function handleCheckoutSessionCompleted(env, object) {
 
   const email = await resolveSubscriberEmail(env, stripeSession)
   const plan = row.plan
+  const verifiedUserId = String(stripeSession.metadata?.user_id || '').trim()
+  let activated = false
 
   if (email && !ONE_TIME_UNLOCK_PLANS.has(plan)) {
-    await activateProfile(env, email, plan, {
+    const result = await activateProfile(env, email, plan, {
       customerId: stripeSession.customer,
       subscriptionId: stripeSession.subscription,
+      verifiedUserId,
     })
-    await sendSubscriptionWelcomeEmail(env, {
-      email,
-      plan,
-      siteUrl: env.PUBLIC_SITE_URL || 'https://vortxmkt.com',
-    }).catch(() => null)
+    activated = Boolean(result?.applied)
+    if (activated) {
+      await sendSubscriptionWelcomeEmail(env, {
+        email,
+        plan,
+        siteUrl: env.PUBLIC_SITE_URL || 'https://vortxmkt.com',
+      }).catch(() => null)
+    }
   }
 
   const scanEntityIds = parseEntityIdList(stripeSession.metadata?.scan_entity_ids || '')
-  if (email && scanEntityIds.length && !ONE_TIME_UNLOCK_PLANS.has(plan)) {
+  if (activated && email && scanEntityIds.length && !ONE_TIME_UNLOCK_PLANS.has(plan)) {
     await queueScanWatchlistSetup(env, supabaseRest, {
       email,
       plan,
@@ -150,9 +177,15 @@ async function handleCheckoutSessionCompleted(env, object) {
 }
 
 async function activateProfile(env, email, plan, stripeIds = {}) {
-  if (!email) return
-  const rows = await supabaseRest(env, `app_profiles?email=eq.${encodeURIComponent(email.toLowerCase())}&limit=1`)
+  if (!email) return { applied: false }
+  const rows = await supabaseRest(
+    env,
+    `app_profiles?select=user_id,email,plan,subscription_status,stripe_customer_id,stripe_subscription_id&email=eq.${encodeURIComponent(email.toLowerCase())}&limit=1`,
+  )
   const existing = rows?.[0]
+  if (!checkoutActivationApplies(existing, stripeIds.verifiedUserId)) {
+    return { applied: false, reason: 'unverified_account' }
+  }
   const patch = {
     plan,
     subscription_status: 'active',
@@ -166,7 +199,7 @@ async function activateProfile(env, email, plan, stripeIds = {}) {
       method: 'PATCH',
       body: JSON.stringify(patch),
     })
-    return
+    return { applied: true }
   }
 
   await supabaseRest(env, 'app_profiles', {
@@ -180,6 +213,7 @@ async function activateProfile(env, email, plan, stripeIds = {}) {
       },
     ]),
   })
+  return { applied: true }
 }
 
 export async function onRequestPost({ request, env }) {
