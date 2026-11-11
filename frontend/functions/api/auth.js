@@ -41,6 +41,7 @@ import {
 } from '../lib/trading-filings.js'
 import { loadAlertSummaryForUser } from '../lib/watchlist-alerts.js'
 import { detectionTimestamp } from '../lib/news-coverage.js'
+import { applyPendingBillingClaim } from '../lib/pending-billing.js'
 
 const DESK_WATCHLIST_LABEL = 'Desk watchlist'
 
@@ -312,6 +313,15 @@ async function profileFor(env, user) {
       }),
     })
     profile = updated?.[0] || profile
+  }
+
+  if (profile?.user_id && profile?.email) {
+    try {
+      const claimed = await applyPendingBillingClaim(env, profile)
+      if (claimed) profile = claimed
+    } catch (error) {
+      console.error('pending_billing_claim_failed', error?.message || error)
+    }
   }
 
   return profile

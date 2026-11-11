@@ -3,6 +3,11 @@ import { parseEntityIdList, queueScanWatchlistSetup } from '../lib/scan-watchlis
 import { sendSubscriptionWelcomeEmail } from '../lib/transactional-email.js'
 import { upsertCheckoutSessionRow } from '../lib/checkout-session-store.js'
 import {
+  attachCheckoutClaim,
+  profileActivationTarget,
+  recordBillingClaim,
+} from '../lib/pending-billing.js'
+import {
   buildCheckoutSessionRow,
   fetchStripeCheckoutSession,
   loadExistingCheckoutRow,
@@ -120,8 +125,9 @@ async function handleCheckoutSessionCompleted(env, object) {
     row.price_id = priceIdForPlan(env, row.plan)
   }
   row.status = 'completed'
+  const claimedRow = attachCheckoutClaim(row, stripeSession)
 
-  await upsertCheckout(env, row)
+  await upsertCheckout(env, claimedRow)
 
   const email = await resolveSubscriberEmail(env, stripeSession)
   const plan = row.plan
@@ -149,10 +155,34 @@ async function handleCheckoutSessionCompleted(env, object) {
   }
 }
 
+function stripeId(value) {
+  if (!value) return ''
+  if (typeof value === 'string') return value.trim()
+  if (typeof value === 'object' && value.id) return String(value.id).trim()
+  return ''
+}
+
+async function stripeCustomerEmail(env, customer) {
+  const customerId = stripeId(customer)
+  const key = String(env.STRIPE_SECRET_KEY || '').trim()
+  if (!customerId || !key) return ''
+  const response = await fetch(`https://api.stripe.com/v1/customers/${encodeURIComponent(customerId)}`, {
+    headers: { authorization: `Bearer ${key}` },
+  })
+  const payload = await response.json().catch(() => ({}))
+  if (!response.ok) return ''
+  return String(payload.email || '').trim().toLowerCase()
+}
+
 async function activateProfile(env, email, plan, stripeIds = {}) {
-  if (!email) return
+  if (!email) return { applied: false, reason: 'missing_email' }
   const rows = await supabaseRest(env, `app_profiles?email=eq.${encodeURIComponent(email.toLowerCase())}&limit=1`)
   const existing = rows?.[0]
+  // app_profiles.user_id is the primary key. A logged-out payer has no row yet,
+  // and inserting one without a user id fails the webhook.
+  if (profileActivationTarget(existing) !== 'profile') {
+    return { applied: false, reason: 'pending_signup' }
+  }
   const patch = {
     plan,
     subscription_status: 'active',
@@ -161,24 +191,22 @@ async function activateProfile(env, email, plan, stripeIds = {}) {
     updated_at: new Date().toISOString(),
   }
 
-  if (existing?.user_id) {
-    await supabaseRest(env, `app_profiles?user_id=eq.${encodeURIComponent(existing.user_id)}`, {
-      method: 'PATCH',
-      body: JSON.stringify(patch),
-    })
-    return
-  }
+  await supabaseRest(env, `app_profiles?user_id=eq.${encodeURIComponent(existing.user_id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  })
+  return { applied: true }
+}
 
-  await supabaseRest(env, 'app_profiles', {
-    method: 'POST',
-    headers: { prefer: 'resolution=merge-duplicates' },
-    body: JSON.stringify([
-      {
-        email: email.toLowerCase(),
-        role: 'customer',
-        ...patch,
-      },
-    ]),
+async function rememberSubscriptionClaim(env, email, object, { plan = '', subscriptionStatus, subscriptionId }) {
+  const claimEmail = email || (await stripeCustomerEmail(env, object.customer))
+  if (!claimEmail) return { updated: false, reason: 'missing_email' }
+  return recordBillingClaim(env, {
+    email: claimEmail,
+    plan,
+    subscriptionStatus,
+    customerId: stripeId(object.customer),
+    subscriptionId,
   })
 }
 
@@ -237,6 +265,7 @@ export async function onRequestPost({ request, env }) {
             ? 'past_due'
             : 'canceled'
       const plan = String(object.metadata?.plan || planFromEnvPrice(env, object.items?.data?.[0]?.price?.id || ''))
+      const explicitPlan = String(object.metadata?.plan || '').trim()
       if (email) {
         await supabaseRest(env, `app_profiles?email=eq.${encodeURIComponent(email.toLowerCase())}`, {
           method: 'PATCH',
@@ -249,6 +278,11 @@ export async function onRequestPost({ request, env }) {
           }),
         })
       }
+      await rememberSubscriptionClaim(env, email, object, {
+        plan: explicitPlan,
+        subscriptionStatus: status,
+        subscriptionId: stripeId(object.id),
+      })
       if (status === 'trialing' && type === 'customer.subscription.created') {
         try {
           const { recordMarketingStep } = await import('./marketing-track.js')
@@ -265,15 +299,20 @@ export async function onRequestPost({ request, env }) {
 
     if (type === 'customer.subscription.deleted' || type === 'invoice.payment_failed') {
       const email = await resolveSubscriberEmail(env, object)
+      const subscriptionStatus = type === 'invoice.payment_failed' ? 'past_due' : 'canceled'
       if (email) {
         await supabaseRest(env, `app_profiles?email=eq.${encodeURIComponent(email.toLowerCase())}`, {
           method: 'PATCH',
           body: JSON.stringify({
-            subscription_status: type === 'invoice.payment_failed' ? 'past_due' : 'canceled',
+            subscription_status: subscriptionStatus,
             updated_at: new Date().toISOString(),
           }),
         })
       }
+      await rememberSubscriptionClaim(env, email, object, {
+        subscriptionStatus,
+        subscriptionId: stripeId(type.startsWith('customer.subscription.') ? object.id : object.subscription),
+      })
     }
   } catch (error) {
     return json({ ok: false, error: 'handler_failed', message: error.message }, { status: 500 })
