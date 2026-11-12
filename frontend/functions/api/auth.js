@@ -431,6 +431,33 @@ async function findAuthUserByEmail(env, email) {
   return (payload.users || []).find((user) => String(user.email || '').toLowerCase() === email.toLowerCase()) || null
 }
 
+/**
+ * Body for admin user creation. Email is not confirmed until the inbox owner
+ * opens the confirmation link. Forcing email_confirm would let anyone mint a
+ * session for a customer email and inherit that Stripe subscription.
+ */
+export function authUserCreatePayload(email, password) {
+  return {
+    email,
+    password,
+    email_confirm: false,
+    user_metadata: { role: 'customer' },
+    app_metadata: { role: 'customer' },
+  }
+}
+
+/**
+ * A profile already tied to Stripe or a live subscription must not be bound to
+ * a password the caller chose. The inbox owner has to use the email sign-in link.
+ */
+export function profileRequiresVerifiedSignup(profile) {
+  if (!profile) return false
+  if (String(profile.stripe_customer_id || '').trim()) return true
+  if (String(profile.stripe_subscription_id || '').trim()) return true
+  const status = String(profile.subscription_status || '').trim()
+  return status === 'active' || status === 'trialing' || status === 'past_due'
+}
+
 async function createAuthUser(env, email, password) {
   const response = await fetch(`${getSupabaseUrl(env)}/auth/v1/admin/users`, {
     method: 'POST',
@@ -440,17 +467,49 @@ async function createAuthUser(env, email, password) {
       'content-type': 'application/json',
       accept: 'application/json',
     },
-    body: JSON.stringify({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: { role: 'customer' },
-      app_metadata: { role: 'customer' },
-    }),
+    body: JSON.stringify(authUserCreatePayload(email, password)),
   })
   const payload = await response.json().catch(() => ({}))
   if (!response.ok) throw new Error(payload?.message || payload?.msg || payload?.error || `auth_user_create_failed_${response.status}`)
   return payload
+}
+
+async function deleteAuthUser(env, userId) {
+  const url = getSupabaseUrl(env)
+  const service = getSupabaseServiceRoleKey(env)
+  if (!url || !service || !userId) return
+  await fetch(`${url}/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
+    method: 'DELETE',
+    headers: { apikey: service, authorization: `Bearer ${service}` },
+  }).catch(() => {})
+}
+
+async function sendSignupConfirmation(env, email, redirectTo) {
+  const url = getSupabaseUrl(env)
+  const apikey = getSupabasePublishableKey(env)
+  if (!url || !apikey) return false
+  const headers = { apikey, 'content-type': 'application/json' }
+  const resent = await fetch(`${url}/auth/v1/resend`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      type: 'signup',
+      email,
+      options: { email_redirect_to: redirectTo },
+    }),
+  })
+  if (resent.ok) return true
+  // Same mailer the one-click sign-in link already uses, if signup resend is unavailable.
+  const magic = await fetch(`${url}/auth/v1/otp`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      email,
+      create_user: false,
+      options: { email_redirect_to: redirectTo },
+    }),
+  })
+  return magic.ok
 }
 
 async function parseRequestBody(request) {
@@ -499,10 +558,18 @@ async function passwordGrant(env, email, password) {
 
   const payload = await response.json().catch(() => ({}))
   if (!response.ok) {
+    const message = payload?.error_description || payload?.msg || payload?.message || 'Invalid login credentials'
+    if (/not confirmed/i.test(String(message))) {
+      return {
+        ok: false,
+        error: 'email_not_confirmed',
+        message: 'Confirm your email before signing in. Check the inbox for this address.',
+      }
+    }
     return {
       ok: false,
       error: 'invalid_credentials',
-      message: payload?.error_description || payload?.msg || payload?.message || 'Invalid login credentials',
+      message,
     }
   }
 
@@ -593,7 +660,8 @@ export async function onAuthLogin({ request, env }) {
 
     const session = await passwordGrant(env, email, password)
     if (!session.ok) {
-      return json(session, { status: session.error === 'invalid_credentials' ? 401 : 503 })
+      const status = session.error === 'invalid_credentials' ? 401 : session.error === 'email_not_confirmed' ? 403 : 503
+      return json(session, { status })
     }
 
     return json({
@@ -831,14 +899,36 @@ export async function onCustomerSignup({ request, env }) {
       return json({ ok: false, error: 'account_exists', message: 'Account already exists. Log in with this email.' }, { status: 409 })
     }
 
+    const existingProfiles = await supabaseRest(env, `app_profiles?select=*&email=eq.${encodeURIComponent(email)}&limit=1`)
+    const existingProfile = existingProfiles?.[0] || null
+    if (profileRequiresVerifiedSignup(existingProfile)) {
+      const message = 'This email already has a Vortx subscription. Log in and choose Email me a sign-in link so we can confirm the inbox before a password is set.'
+      if (htmlFlow) return signupRedirect(siteOrigin, 'error=verify_email')
+      return json({ ok: false, error: 'verify_email', message }, { status: 409 })
+    }
+
     const created = await createAuthUser(env, email, password)
     const user = created?.id ? created : created?.user || created
     if (!user?.id) {
       if (htmlFlow) return signupRedirect(siteOrigin, 'error=auth_create_failed')
       return json({ ok: false, error: 'auth_create_failed', message: 'Could not create login. Try again or contact support.' }, { status: 500 })
     }
-    const existingProfiles = await supabaseRest(env, `app_profiles?select=*&email=eq.${encodeURIComponent(email)}&limit=1`)
-    const existingProfile = existingProfiles?.[0] || null
+
+    const confirmRedirect = `${siteOrigin}/?view=customer`
+    const confirmationSent = await sendSignupConfirmation(env, email, confirmRedirect)
+    if (!confirmationSent) {
+      await deleteAuthUser(env, user.id)
+      if (htmlFlow) return signupRedirect(siteOrigin, 'error=auth_create_failed')
+      return json(
+        {
+          ok: false,
+          error: 'confirmation_email_failed',
+          message: 'Could not send the confirmation email. Try again shortly.',
+        },
+        { status: 502 },
+      )
+    }
+
     const profilePayload = {
       user_id: user.id,
       email,
@@ -861,37 +951,14 @@ export async function onCustomerSignup({ request, env }) {
       })
     }
 
-    const session = await passwordGrant(env, email, password)
-
-    if (htmlFlow) {
-      const redirectUrl = `${siteOrigin}/?view=customer&signup=created`
-      if (session.ok) {
-        return new Response(null, {
-          status: 303,
-          headers: {
-            location: `${redirectUrl}&auth=handoff`,
-            'set-cookie': `vortx_auth_handoff=${authHandoffCookieValue(session)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=120`,
-            'cache-control': 'no-store',
-          },
-        })
-      }
-      return Response.redirect(redirectUrl, 303)
-    }
-
-    if (!session.ok) {
-      return json({
-        ok: true,
-        message: 'Customer account created. Log in with this email and password.',
-        login_required: true,
-      })
-    }
+    const confirmMessage = 'Check your email to confirm this account. Then log in with your password.'
+    if (htmlFlow) return signupRedirect(siteOrigin, 'confirm=sent')
 
     return json({
       ok: true,
-      message: 'Customer account created. You are signed in.',
-      access_token: session.access_token,
-      refresh_token: session.refresh_token || null,
-      user: session.user || null,
+      message: confirmMessage,
+      confirmation_required: true,
+      login_required: true,
     })
   } catch (error) {
     if (htmlFlow) return signupRedirect(siteOrigin, `error=${encodeURIComponent(String(error.message || 'signup_failed').slice(0, 120))}`)

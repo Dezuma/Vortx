@@ -1093,6 +1093,7 @@
     password_mismatch: 'Passwords do not match.',
     terms_required: 'Accept the terms to continue.',
     account_exists: 'An account already exists for that email. Log in instead.',
+    verify_email: 'This email already has a subscription. Log in and choose Email me a sign-in link so we can confirm the inbox before a password is set.',
     supabase_unconfigured: 'Sign-up is temporarily unavailable. Contact support.',
     invalid_body: 'Could not read the form. Try again.',
     auth_create_failed: 'Could not create your login. Try again or contact support.',
@@ -1245,7 +1246,9 @@
     var params = new URLSearchParams(location.search)
     var errorCode = params.get('error')
     var status = document.getElementById('signup-status')
-    if (errorCode) {
+    if (params.get('confirm') === 'sent') {
+      showStatus(status, 'Check your email to confirm this account. Then log in with your password.', false)
+    } else if (errorCode) {
       showStatus(status, SIGNUP_ERRORS[errorCode] || decodeURIComponent(errorCode), true)
     }
 
@@ -1304,11 +1307,19 @@
           })
         })
         .then(function (payload) {
+          if (payload.res.status === 409 && payload.body.error === 'verify_email') {
+            showStatus(status, payload.body.message || SIGNUP_ERRORS.verify_email, true)
+            return
+          }
           if (payload.res.status === 409) {
             window.location.assign(CANONICAL_SITE + '/?view=customer&signup=exists')
             return
           }
           if (payload.res.ok && payload.body.ok) {
+            if (payload.body.confirmation_required) {
+              showStatus(status, payload.body.message || 'Check your email to confirm this account. Then log in with your password.', false)
+              return
+            }
             if (payload.body.access_token) {
               try {
                 sessionStorage.setItem(

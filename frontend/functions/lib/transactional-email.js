@@ -50,7 +50,7 @@ function subscriptionWelcomeHtml({ plan, siteUrl }) {
   <h1 style="font-size:24px;margin:12px 0">Your ${safePlan} plan is active</h1>
   <p style="color:#cbd5e1;line-height:1.6">Payment succeeded. Sign in with this same email, open Today's Trades to see the names, then watch one lawmaker or insider. We email you when they file again.</p>
   <p style="margin-top:20px"><a href="${origin}/?view=customer&amp;onboard=watch" style="background:#38bdf8;color:#020617;padding:12px 16px;border-radius:10px;text-decoration:none;font-weight:700">Open desk · watch someone</a></p>
-  <p style="margin-top:16px"><a href="${origin}/signup" style="color:#93c5fd">Create your password</a> if you have not signed up yet.</p>
+  <p style="margin-top:16px">If you have not signed in yet, open the desk and choose <a href="${origin}/?view=customer" style="color:#93c5fd">Email me a sign-in link</a> for this address.</p>
   <p style="margin-top:24px;color:#94a3b8;font-size:12px;line-height:1.6">Stripe receipt is sent separately. Research only. Not investment advice.</p>
 </body></html>`
 }
