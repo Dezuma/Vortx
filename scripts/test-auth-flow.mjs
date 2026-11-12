@@ -134,6 +134,9 @@ async function main() {
 
   if (signup.res.status === 404) {
     fail('signup → login → me', 'signup route missing')
+  } else if (signup.res.ok && signup.body.confirmation_required) {
+    if (signup.body.access_token) fail('signup → login → me', 'confirmation response included a session')
+    else pass('signup → login → me', 'confirmation required before a session')
   } else if (!signup.res.ok && signup.res.status !== 409) {
     fail('signup → login → me', signup.body.message || signup.body.error || `signup ${signup.res.status}`)
   } else {
