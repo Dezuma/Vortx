@@ -5,6 +5,7 @@ import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { supabaseRest } from '../frontend/functions/lib/supabase-rest.js'
 import {
+  disambiguateForm4SourceRecordIds,
   mapCongressTrade,
   mapForm4Filing,
   mapInstitutional13f,
@@ -92,9 +93,11 @@ const form4Src = {
     'https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=4&company=&dateb=&owner=include&count=100&output=atom',
 }
 const form4Xml = await fetch(form4Src.source_url, { headers: ua }).then((r) => r.text())
-const form4 = parseEdgarAtomEntries(form4Xml, { formPrefix: '4' })
-  .slice(0, 15)
-  .map((e, i) => mapForm4Filing({ ...e, filer: e.companyName, issuer: e.companyName }, form4Src, i))
+const form4 = disambiguateForm4SourceRecordIds(
+  parseEdgarAtomEntries(form4Xml, { formPrefix: '4' })
+    .slice(0, 15)
+    .map((e, i) => mapForm4Filing({ ...e, filer: e.companyName, issuer: e.companyName }, form4Src, i)),
+)
 console.log('form4 records', form4.length)
 if (form4[0]) console.log('sample', form4[0].event.title, form4[0].event.entity_name)
 console.log(await ingestSource(env, form4Src, form4))
