@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import {
   deriveTradingSignalMeta,
+  disambiguateForm4SourceRecordIds,
   form4Severity,
   mapCongressTrade,
   mapForm4Filing,
@@ -19,6 +20,7 @@ import {
 } from '../frontend/functions/lib/form4-ownership.js'
 import { mapHouseClerkPtrRow } from '../frontend/functions/lib/house-clerk-ptr.js'
 import {
+  accessionFromSourceValue,
   attachFilingIdentifiers,
   cikFromSourceValue,
   edgarFilingIndexUrl,
@@ -88,6 +90,36 @@ check('tags Form 4 Reporting vs Issuer roles', () => {
   )
   if (!person.event.entity_name.includes('Jane Executive')) throw new Error('person-first entity missing')
   if (!person.event.summary.includes('Reporting owner:')) throw new Error('reporting owner summary missing')
+})
+
+check('keeps each Form 4 reporting owner when they share an accession', () => {
+  const source = { slug: 'sec-edgar-form4', source_url: 'https://www.sec.gov/' }
+  const accession = '0001539497-26-002941'
+  const shared = {
+    accession,
+    filing_date: '2026-11-13',
+    id: `tag:sec.gov,2008:accession-number=${accession}`,
+  }
+  const records = disambiguateForm4SourceRecordIds([
+    mapForm4Filing({ ...shared, filer: 'ICAHN PARTNERS LP', cik: '0001313666' }, source, 0),
+    mapForm4Filing({ ...shared, filer: 'ICAHN CARL C', cik: '0000921669' }, source, 1),
+  ])
+  const ids = records.map((record) => record.raw.source_record_id)
+  if (new Set(ids).size !== 2) throw new Error(`expected two ids, got ${ids.join(' | ')}`)
+  if (!ids[0].includes('1313666') || !ids[1].includes('921669')) throw new Error(ids.join(' | '))
+  if (accessionFromSourceValue(ids[0]) !== accession) throw new Error(`accession parse failed: ${ids[0]}`)
+  if (accessionFromSourceValue(ids[1]) !== accession) throw new Error(`accession parse failed: ${ids[1]}`)
+
+  const single = disambiguateForm4SourceRecordIds([
+    mapForm4Filing(
+      { filer: 'Jane Executive', cik: '0001134100', accession: '0001193125-26-459015', filing_date: '2026-11-13' },
+      source,
+      0,
+    ),
+  ])
+  if (single[0].raw.source_record_id !== '0001193125-26-459015') {
+    throw new Error(single[0].raw.source_record_id)
+  }
 })
 
 check('maps Form 4 without inventing amounts', () => {

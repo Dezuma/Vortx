@@ -371,6 +371,67 @@ export function mapForm4Filing(row, source, index = 0) {
   }
 }
 
+function form4DigitsKey(value) {
+  return String(value || '').replace(/\D/g, '').replace(/^0+/, '')
+}
+
+function form4AccessionKey(record) {
+  const row = record?.raw?.payload || {}
+  const explicit = String(row.accession || row.accessionNumber || '').trim()
+  if (/^\d{10}-\d{2}-\d{6}$/.test(explicit)) return explicit
+  const fromId = String(row.id || '').match(/accession-number=(\d{10}-\d{2}-\d{6})/i)
+  if (fromId) return fromId[1]
+  const fromRecord = String(record?.raw?.source_record_id || '').match(/\b(\d{10}-\d{2}-\d{6})\b/)
+  return fromRecord ? fromRecord[1] : ''
+}
+
+function form4PartyKey(record) {
+  const row = record?.raw?.payload || {}
+  const event = record?.event || {}
+  const cik = form4DigitsKey(row.cik || row.ownerCik || row.owner_cik || event.owner_cik)
+  if (cik) return cik
+  const name = String(row.filer || row.companyName || event.entity_name || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+  return name || 'unknown'
+}
+
+/**
+ * A Form 4 accession is one filing, and EDGAR emits a separate atom entry per
+ * reporting owner. Those entries share the accession. Keep a single-owner
+ * filing on the bare accession so re-ingest updates the existing row, and
+ * give each extra owner its own id so the upsert cannot replace the other.
+ */
+export function disambiguateForm4SourceRecordIds(records) {
+  const list = Array.isArray(records) ? records : []
+  const groups = new Map()
+  for (const record of list) {
+    const accession = form4AccessionKey(record)
+    if (!accession) continue
+    const bucket = groups.get(accession) || []
+    bucket.push(record)
+    groups.set(accession, bucket)
+  }
+
+  for (const [accession, bucket] of groups) {
+    if (bucket.length < 2) continue
+    const seen = new Set()
+    for (const record of bucket) {
+      let id = `${accession}:${form4PartyKey(record)}`
+      if (seen.has(id)) {
+        let n = 2
+        while (seen.has(`${id}:${n}`)) n += 1
+        id = `${id}:${n}`
+      }
+      seen.add(id)
+      record.raw.source_record_id = id
+    }
+  }
+
+  return list
+}
+
 /**
  * Build an ingest record for a STOCK Act / congressional PTR disclosure.
  */

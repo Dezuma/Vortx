@@ -14,6 +14,7 @@ import {
 } from '../frontend/functions/lib/warn-ingest.js'
 import { parseCaliforniaWarnXlsx } from '../frontend/functions/lib/warn-xlsx.js'
 import {
+  disambiguateForm4SourceRecordIds,
   mapCongressTrade,
   mapForm4Filing,
   mapInstitutional13f,
@@ -971,23 +972,25 @@ async function fetchSecEdgarForm4(source, env) {
   const batchSize = Math.min(Number(source.batch_size) || 80, 100)
   const atomSlice = candidates.slice(0, batchSize)
   const enriched = await enrichForm4Batch(atomSlice, env, Math.min(batchSize, 50))
-  return enriched.map((entry, index) =>
-    mapForm4Filing(
-      {
-        ...entry,
-        filer: entry.filer || entry.companyName,
-        issuer: entry.issuer || (entry.role === 'issuer' ? entry.companyName : ''),
-        ticker: entry.ticker,
-        filing_date: entry.filing_date,
-        trade_date: entry.trade_date,
-        link: entry.link,
-        id: entry.id,
-        cik: entry.cik,
-        accession: entry.accession,
-        issuerCik: entry.issuerCik || entry.cik,
-      },
-      source,
-      index,
+  return disambiguateForm4SourceRecordIds(
+    enriched.map((entry, index) =>
+      mapForm4Filing(
+        {
+          ...entry,
+          filer: entry.filer || entry.companyName,
+          issuer: entry.issuer || (entry.role === 'issuer' ? entry.companyName : ''),
+          ticker: entry.ticker,
+          filing_date: entry.filing_date,
+          trade_date: entry.trade_date,
+          link: entry.link,
+          id: entry.id,
+          cik: entry.cik,
+          accession: entry.accession,
+          issuerCik: entry.issuerCik || entry.cik,
+        },
+        source,
+        index,
+      ),
     ),
   )
 }
