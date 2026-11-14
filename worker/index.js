@@ -192,7 +192,11 @@ function injectLeadCapture(html) {
 function signupPage(request) {
   const url = new URL(request.url)
   const errorCode = String(url.searchParams.get('error') || '').trim()
-  const errorQuery = errorCode ? `?error=${encodeURIComponent(errorCode)}` : ''
+  const confirmCode = String(url.searchParams.get('confirm') || '').trim()
+  const signupParams = new URLSearchParams()
+  if (errorCode) signupParams.set('error', errorCode)
+  if (confirmCode) signupParams.set('confirm', confirmCode)
+  const errorQuery = signupParams.toString() ? `?${signupParams.toString()}` : ''
 
   return new Response(`<!doctype html>
 <html lang="en">

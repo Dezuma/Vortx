@@ -1,7 +1,14 @@
 import { hasSupabase, json, supabaseRest } from '../lib/supabase-rest.js'
+import { isEmailConfirmed, lookupAuthUserByEmail } from '../lib/auth-user-lookup.js'
 import { parseEntityIdList, queueScanWatchlistSetup } from '../lib/scan-watchlist.js'
 import { sendSubscriptionWelcomeEmail } from '../lib/transactional-email.js'
 import { upsertCheckoutSessionRow } from '../lib/checkout-session-store.js'
+import {
+  decideProfileActivation,
+  ONE_TIME_UNLOCK_PLANS,
+  recordCheckoutSubscriptionState,
+  stripeObjectId,
+} from '../lib/paid-checkout.js'
 import {
   buildCheckoutSessionRow,
   fetchStripeCheckoutSession,
@@ -22,11 +29,11 @@ const PLAN_BY_PRICE_ENV = {
   STRIPE_LANDLORD_CHECK_PRICE_ID: 'landlord_unlock',
 }
 
-const ONE_TIME_UNLOCK_PLANS = new Set(['contractor_unlock', 'job_safety_unlock', 'landlord_unlock'])
-
-function planFromEnvPrice(env, priceId) {
+export function planFromEnvPrice(env, priceId) {
+  const wanted = String(priceId || '').trim()
+  if (!wanted) return 'nebula'
   for (const [key, plan] of Object.entries(PLAN_BY_PRICE_ENV)) {
-    if (String(env[key] || '').trim() === priceId) return plan
+    if (String(env[key] || '').trim() === wanted) return plan
   }
   return 'nebula'
 }
@@ -120,6 +127,12 @@ async function handleCheckoutSessionCompleted(env, object) {
     row.price_id = priceIdForPlan(env, row.plan)
   }
   row.status = 'completed'
+  row.metadata = {
+    ...(row.metadata || {}),
+    stripe_customer_id: stripeObjectId(stripeSession.customer),
+    stripe_subscription_id: stripeObjectId(stripeSession.subscription),
+    subscription_status: 'active',
+  }
 
   await upsertCheckout(env, row)
 
@@ -150,36 +163,68 @@ async function handleCheckoutSessionCompleted(env, object) {
 }
 
 async function activateProfile(env, email, plan, stripeIds = {}) {
-  if (!email) return
-  const rows = await supabaseRest(env, `app_profiles?email=eq.${encodeURIComponent(email.toLowerCase())}&limit=1`)
-  const existing = rows?.[0]
-  const patch = {
+  const normalized = String(email || '').trim().toLowerCase()
+  if (!normalized) return { applied: false, pending: false, reason: 'missing_email' }
+
+  const rows = await supabaseRest(env, `app_profiles?email=eq.${encodeURIComponent(normalized)}&limit=1`)
+  const existing = rows?.[0] || null
+  const authUser = await lookupAuthUserByEmail(env, normalized)
+  const decision = decideProfileActivation({
+    email: normalized,
+    profile: existing,
+    authUser,
     plan,
-    subscription_status: 'active',
-    stripe_customer_id: stripeIds.customerId || existing?.stripe_customer_id || null,
-    stripe_subscription_id: stripeIds.subscriptionId || existing?.stripe_subscription_id || null,
-    updated_at: new Date().toISOString(),
+    stripeIds,
+  })
+
+  if (decision.action === 'pending') {
+    return { applied: false, pending: true, reason: decision.reason }
   }
 
-  if (existing?.user_id) {
-    await supabaseRest(env, `app_profiles?user_id=eq.${encodeURIComponent(existing.user_id)}`, {
+  if (decision.action === 'patch') {
+    await supabaseRest(env, `app_profiles?user_id=eq.${encodeURIComponent(decision.userId)}`, {
       method: 'PATCH',
-      body: JSON.stringify(patch),
+      body: JSON.stringify(decision.patch),
     })
-    return
+    return { applied: true, pending: false }
   }
 
   await supabaseRest(env, 'app_profiles', {
     method: 'POST',
     headers: { prefer: 'resolution=merge-duplicates' },
-    body: JSON.stringify([
-      {
-        email: email.toLowerCase(),
-        role: 'customer',
-        ...patch,
-      },
-    ]),
+    body: JSON.stringify([decision.row]),
   })
+  return { applied: true, pending: false }
+}
+
+async function applySubscriptionChange(env, email, patch) {
+  const normalized = String(email || '').trim().toLowerCase()
+  if (!normalized) return { applied: false, pending: true, reason: 'missing_email' }
+
+  await recordCheckoutSubscriptionState(env, normalized, {
+    plan: patch.plan,
+    subscription_status: patch.subscription_status,
+    stripe_customer_id: patch.stripe_customer_id,
+    stripe_subscription_id: patch.stripe_subscription_id,
+  }).catch(() => null)
+
+  const rows = await supabaseRest(env, `app_profiles?email=eq.${encodeURIComponent(normalized)}&limit=1`)
+  const profile = rows?.[0]
+  if (!profile?.user_id) return { applied: false, pending: true, reason: 'account_missing' }
+
+  const authUser = await lookupAuthUserByEmail(env, normalized)
+  if (authUser && !isEmailConfirmed(authUser)) {
+    return { applied: false, pending: true, reason: 'email_unconfirmed' }
+  }
+
+  await supabaseRest(env, `app_profiles?user_id=eq.${encodeURIComponent(profile.user_id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      ...patch,
+      updated_at: new Date().toISOString(),
+    }),
+  })
+  return { applied: true, pending: false }
 }
 
 export async function onRequestPost({ request, env }) {
@@ -238,15 +283,11 @@ export async function onRequestPost({ request, env }) {
             : 'canceled'
       const plan = String(object.metadata?.plan || planFromEnvPrice(env, object.items?.data?.[0]?.price?.id || ''))
       if (email) {
-        await supabaseRest(env, `app_profiles?email=eq.${encodeURIComponent(email.toLowerCase())}`, {
-          method: 'PATCH',
-          body: JSON.stringify({
-            plan,
-            subscription_status: status,
-            stripe_customer_id: object.customer,
-            stripe_subscription_id: object.id,
-            updated_at: new Date().toISOString(),
-          }),
+        await applySubscriptionChange(env, email, {
+          plan,
+          subscription_status: status,
+          stripe_customer_id: stripeObjectId(object.customer),
+          stripe_subscription_id: stripeObjectId(object.id),
         })
       }
       if (status === 'trialing' && type === 'customer.subscription.created') {
@@ -266,12 +307,11 @@ export async function onRequestPost({ request, env }) {
     if (type === 'customer.subscription.deleted' || type === 'invoice.payment_failed') {
       const email = await resolveSubscriberEmail(env, object)
       if (email) {
-        await supabaseRest(env, `app_profiles?email=eq.${encodeURIComponent(email.toLowerCase())}`, {
-          method: 'PATCH',
-          body: JSON.stringify({
-            subscription_status: type === 'invoice.payment_failed' ? 'past_due' : 'canceled',
-            updated_at: new Date().toISOString(),
-          }),
+        const failedPayment = type === 'invoice.payment_failed'
+        await applySubscriptionChange(env, email, {
+          subscription_status: failedPayment ? 'past_due' : 'canceled',
+          stripe_customer_id: stripeObjectId(object.customer),
+          stripe_subscription_id: stripeObjectId(failedPayment ? object.subscription : object.id),
         })
       }
     }
