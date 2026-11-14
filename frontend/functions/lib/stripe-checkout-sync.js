@@ -70,7 +70,9 @@ export function buildCheckoutSessionRow(env, stripeSession, existing = null) {
           metadata.owner_email ||
           existing?.email ||
           '',
-      ).trim() || null,
+      )
+        .trim()
+        .toLowerCase() || null,
     metadata: {
       ...(existing?.metadata || {}),
       ...(metadata || {}),

@@ -34,6 +34,8 @@ import {
 import { entitlementForPlan } from '../lib/plan-entitlements.js'
 import { blindSpotScanSummary } from '../lib/scan-core.js'
 import { getSupabasePublishableKey, getSupabaseServiceRoleKey, getSupabaseUrl } from '../lib/worker-env.js'
+import { isEmailConfirmed, lookupAuthUserByEmail } from '../lib/auth-user-lookup.js'
+import { findSubscriptionGrant, profileEntitlementPatch } from '../lib/paid-checkout.js'
 import {
   deriveTradingSignalMeta,
   isTradingEventType,
@@ -314,6 +316,31 @@ async function profileFor(env, user) {
     profile = updated?.[0] || profile
   }
 
+  if (
+    profile?.user_id &&
+    !shouldBeAdmin &&
+    isEmailConfirmed(user) &&
+    String(profile.subscription_status || 'none') === 'none'
+  ) {
+    try {
+      const grant = await findSubscriptionGrant(env, email)
+      const entitlement = profileEntitlementPatch(profile.subscription_status, grant, {
+        emailConfirmed: true,
+        isAdmin: false,
+      })
+      if (entitlement) {
+        const updated = await supabaseRest(env, `app_profiles?user_id=eq.${encodeURIComponent(profile.user_id)}`, {
+          method: 'PATCH',
+          headers: { prefer: 'return=representation' },
+          body: JSON.stringify({ ...entitlement, updated_at: new Date().toISOString() }),
+        })
+        profile = updated?.[0] || { ...profile, ...entitlement }
+      }
+    } catch (error) {
+      console.error('checkout_claim_failed', error?.message || error)
+    }
+  }
+
   return profile
 }
 
@@ -419,16 +446,77 @@ async function auditQuery(env, profile, route, meta = {}) {
 }
 
 async function findAuthUserByEmail(env, email) {
-  const response = await fetch(`${getSupabaseUrl(env)}/auth/v1/admin/users?per_page=1000`, {
+  return lookupAuthUserByEmail(env, email)
+}
+
+async function deleteAuthUser(env, userId) {
+  if (!userId) return
+  await fetch(`${getSupabaseUrl(env)}/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
+    method: 'DELETE',
     headers: {
       apikey: getSupabaseServiceRoleKey(env),
       authorization: `Bearer ${getSupabaseServiceRoleKey(env)}`,
-      accept: 'application/json',
     },
+  }).catch(() => {})
+}
+
+async function ensureBlankCustomerProfile(env, user, email) {
+  const existingProfiles = await supabaseRest(
+    env,
+    `app_profiles?select=user_id,email,plan,subscription_status&email=eq.${encodeURIComponent(email)}&limit=1`,
+  )
+  const existingProfile = existingProfiles?.[0] || null
+  if (existingProfile?.user_id && existingProfile.user_id !== user.id) {
+    return { ok: false, conflict: true }
+  }
+  if (existingProfile?.user_id === user.id) return { ok: true }
+  await supabaseRest(env, 'app_profiles', {
+    method: 'POST',
+    headers: { prefer: 'return=minimal' },
+    body: JSON.stringify([
+      {
+        user_id: user.id,
+        email,
+        role: 'customer',
+        plan: 'nebula',
+        subscription_status: 'none',
+        updated_at: new Date().toISOString(),
+      },
+    ]),
   })
-  const payload = await response.json().catch(() => ({}))
-  if (!response.ok) throw new Error(payload?.message || payload?.msg || `auth_user_lookup_failed_${response.status}`)
-  return (payload.users || []).find((user) => String(user.email || '').toLowerCase() === email.toLowerCase()) || null
+  return { ok: true }
+}
+
+async function sendSignupConfirmation(env, email, redirectTo) {
+  const url = getSupabaseUrl(env)
+  const apikey = getSupabasePublishableKey(env)
+  if (!url || !apikey) return { ok: false }
+  const response = await fetch(`${url}/auth/v1/resend`, {
+    method: 'POST',
+    headers: { apikey, 'content-type': 'application/json' },
+    body: JSON.stringify({
+      type: 'signup',
+      email,
+      options: { email_redirect_to: redirectTo },
+    }),
+  })
+  return { ok: response.ok }
+}
+
+async function sendSignupMagicLink(env, email, redirectTo) {
+  const url = getSupabaseUrl(env)
+  const apikey = getSupabasePublishableKey(env)
+  if (!url || !apikey) return { ok: false }
+  const response = await fetch(`${url}/auth/v1/otp`, {
+    method: 'POST',
+    headers: { apikey, 'content-type': 'application/json' },
+    body: JSON.stringify({
+      email,
+      create_user: true,
+      options: { email_redirect_to: redirectTo },
+    }),
+  })
+  return { ok: response.ok }
 }
 
 async function createAuthUser(env, email, password) {
@@ -443,7 +531,7 @@ async function createAuthUser(env, email, password) {
     body: JSON.stringify({
       email,
       password,
-      email_confirm: true,
+      email_confirm: false,
       user_metadata: { role: 'customer' },
       app_metadata: { role: 'customer' },
     }),
@@ -831,58 +919,89 @@ export async function onCustomerSignup({ request, env }) {
       return json({ ok: false, error: 'account_exists', message: 'Account already exists. Log in with this email.' }, { status: 409 })
     }
 
+    const paidGrant = await findSubscriptionGrant(env, email).catch(() => null)
+    if (paidGrant) {
+      const sent = await sendSignupMagicLink(env, email, `${siteOrigin}/?view=customer`)
+      if (!sent.ok) {
+        if (htmlFlow) return signupRedirect(siteOrigin, 'error=confirm_email_failed')
+        return json(
+          {
+            ok: false,
+            error: 'confirm_email_failed',
+            message: 'Could not send the sign-in link. Try again shortly.',
+          },
+          { status: 502 },
+        )
+      }
+      if (htmlFlow) return signupRedirect(siteOrigin, 'confirm=email')
+      return json({
+        ok: true,
+        confirmation_required: true,
+        message: 'Check your email for a sign-in link to activate this account.',
+      })
+    }
+
     const created = await createAuthUser(env, email, password)
     const user = created?.id ? created : created?.user || created
     if (!user?.id) {
       if (htmlFlow) return signupRedirect(siteOrigin, 'error=auth_create_failed')
       return json({ ok: false, error: 'auth_create_failed', message: 'Could not create login. Try again or contact support.' }, { status: 500 })
     }
-    const existingProfiles = await supabaseRest(env, `app_profiles?select=*&email=eq.${encodeURIComponent(email)}&limit=1`)
-    const existingProfile = existingProfiles?.[0] || null
-    const profilePayload = {
-      user_id: user.id,
-      email,
-      role: 'customer',
-      plan: existingProfile?.plan || 'nebula',
-      subscription_status: existingProfile?.subscription_status || 'none',
-      updated_at: new Date().toISOString(),
-    }
-
-    if (existingProfile?.email) {
-      await supabaseRest(env, `app_profiles?email=eq.${encodeURIComponent(email)}`, {
-        method: 'PATCH',
-        body: JSON.stringify(profilePayload),
-      })
-    } else {
-      await supabaseRest(env, 'app_profiles', {
-        method: 'POST',
-        headers: { prefer: 'return=representation' },
-        body: JSON.stringify([profilePayload]),
-      })
-    }
 
     const session = await passwordGrant(env, email, password)
-
-    if (htmlFlow) {
-      const redirectUrl = `${siteOrigin}/?view=customer&signup=created`
-      if (session.ok) {
-        return new Response(null, {
-          status: 303,
-          headers: {
-            location: `${redirectUrl}&auth=handoff`,
-            'set-cookie': `vortx_auth_handoff=${authHandoffCookieValue(session)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=120`,
-            'cache-control': 'no-store',
+    if (!session.ok && /confirm/i.test(`${session.message || ''} ${session.error || ''}`)) {
+      const sent = await sendSignupConfirmation(env, email, `${siteOrigin}/?view=customer`)
+      if (!sent.ok) {
+        await deleteAuthUser(env, user.id)
+        if (htmlFlow) return signupRedirect(siteOrigin, 'error=confirm_email_failed')
+        return json(
+          {
+            ok: false,
+            error: 'confirm_email_failed',
+            message: 'Could not send the confirmation email. Try again shortly.',
           },
-        })
+          { status: 502 },
+        )
       }
-      return Response.redirect(redirectUrl, 303)
+      const saved = await ensureBlankCustomerProfile(env, user, email)
+      if (!saved.ok) {
+        await deleteAuthUser(env, user.id)
+        if (htmlFlow) return Response.redirect(`${siteOrigin}/?view=customer&signup=exists`, 303)
+        return json({ ok: false, error: 'account_exists', message: 'Account already exists. Log in with this email.' }, { status: 409 })
+      }
+      if (htmlFlow) return signupRedirect(siteOrigin, 'confirm=email')
+      return json({
+        ok: true,
+        confirmation_required: true,
+        message: 'Check your email to confirm your account, then log in.',
+      })
     }
 
     if (!session.ok) {
-      return json({
-        ok: true,
-        message: 'Customer account created. Log in with this email and password.',
-        login_required: true,
+      await deleteAuthUser(env, user.id)
+      if (htmlFlow) return signupRedirect(siteOrigin, 'error=auth_create_failed')
+      return json(
+        { ok: false, error: 'auth_create_failed', message: session.message || 'Could not create login. Try again or contact support.' },
+        { status: 500 },
+      )
+    }
+
+    const saved = await ensureBlankCustomerProfile(env, user, email)
+    if (!saved.ok) {
+      await deleteAuthUser(env, user.id)
+      if (htmlFlow) return Response.redirect(`${siteOrigin}/?view=customer&signup=exists`, 303)
+      return json({ ok: false, error: 'account_exists', message: 'Account already exists. Log in with this email.' }, { status: 409 })
+    }
+
+    if (htmlFlow) {
+      const redirectUrl = `${siteOrigin}/?view=customer&signup=created`
+      return new Response(null, {
+        status: 303,
+        headers: {
+          location: `${redirectUrl}&auth=handoff`,
+          'set-cookie': `vortx_auth_handoff=${authHandoffCookieValue(session)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=120`,
+          'cache-control': 'no-store',
+        },
       })
     }
 

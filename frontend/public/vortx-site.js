@@ -1096,6 +1096,7 @@
     supabase_unconfigured: 'Sign-up is temporarily unavailable. Contact support.',
     invalid_body: 'Could not read the form. Try again.',
     auth_create_failed: 'Could not create your login. Try again or contact support.',
+    confirm_email_failed: 'Could not send the confirmation email. Try again shortly.',
   }
 
   function showStatus(el, message, isError) {
@@ -1247,6 +1248,8 @@
     var status = document.getElementById('signup-status')
     if (errorCode) {
       showStatus(status, SIGNUP_ERRORS[errorCode] || decodeURIComponent(errorCode), true)
+    } else if (params.get('confirm') === 'email') {
+      showStatus(status, 'Check your email to confirm your account, then log in.', false)
     }
 
     var passwordInput = document.getElementById('signup-password')
@@ -1306,6 +1309,14 @@
         .then(function (payload) {
           if (payload.res.status === 409) {
             window.location.assign(CANONICAL_SITE + '/?view=customer&signup=exists')
+            return
+          }
+          if (payload.res.ok && payload.body.ok && payload.body.confirmation_required) {
+            showStatus(
+              status,
+              payload.body.message || 'Check your email to confirm your account, then log in.',
+              false,
+            )
             return
           }
           if (payload.res.ok && payload.body.ok) {
