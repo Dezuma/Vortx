@@ -453,14 +453,35 @@ function clean(value, fallback = '') {
   return String(value ?? fallback).trim()
 }
 
-function parseDate(value) {
+function isRealIsoDate(iso) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso)
+  if (!match) return false
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  const parsed = new Date(Date.UTC(year, month - 1, day))
+  return (
+    parsed.getUTCFullYear() === year &&
+    parsed.getUTCMonth() === month - 1 &&
+    parsed.getUTCDate() === day
+  )
+}
+
+/**
+ * Parse a source filing date. Missing or unparseable values stay null.
+ * Never substitute today's date — legal_events.filing_date is what the feed,
+ * map, and alerts treat as the day the record was filed.
+ */
+export function parseDate(value) {
   const text = clean(value)
-  if (!text) return new Date().toISOString().slice(0, 10)
+  if (!text) return null
   if (/^\d{2}\/\d{2}\/\d{4}/.test(text)) {
     const [month, day, year] = text.slice(0, 10).split('/')
-    return `${year}-${month}-${day}`
+    const iso = `${year}-${month}-${day}`
+    return isRealIsoDate(iso) ? iso : null
   }
-  return text.slice(0, 10)
+  const iso = text.slice(0, 10)
+  return isRealIsoDate(iso) ? iso : null
 }
 
 function first(row, names, fallback = '') {
@@ -634,14 +655,7 @@ async function fetchWarnNewYork(source) {
   return mapNewYorkWarnRows(rows, source)
 }
 
-async function fetchWarn(source) {
-  let rows = await requestJson(`${source.source_url}?${qs(source.params)}`)
-  if ((!rows || !rows.length) && source.fallback_params) {
-    rows = await requestJson(`${source.source_url}?${qs(source.fallback_params)}`)
-  }
-  if (!Array.isArray(rows)) return []
-
-  return rows.map((row, index) => {
+export function mapWarnPublicRow(row, source, index = 0) {
     const entity = first(
       row,
       ['company_name', 'company', 'Company Name', 'job_site_name', 'job_site', 'site_name', 'employer'],
@@ -666,7 +680,10 @@ async function fetchWarn(source) {
       first(row, ['notice_date', 'received_date', 'wfdd_received_date', 'Received Date', 'date_received']),
     )
     const effectiveDate = parseDate(first(row, ['layoff_date', 'Layoff Date', 'effective_date', 'closure_date']))
+    // Oregon pulls rows with a layoff date and a possibly blank received date.
+    // A blank notice date must not become "filed today" and hide the layoff date.
     const filingDate = noticeDate || effectiveDate
+    if (!filingDate) return null
     const jurisdiction = buildWarnJurisdiction({ city, county, state, fallback: source.jurisdiction })
     const sourceRecordId = first(row, ['notice_id', 'id', 'record_id', 'warn', 'WARN#'], `${source.slug}-${index + 1}`)
     const severity = warnSeverityFromWorkers(workers)
@@ -697,7 +714,15 @@ async function fetchWarn(source) {
         evidence_url: source.source_url,
       },
     }
-  })
+}
+
+async function fetchWarn(source) {
+  let rows = await requestJson(`${source.source_url}?${qs(source.params)}`)
+  if ((!rows || !rows.length) && source.fallback_params) {
+    rows = await requestJson(`${source.source_url}?${qs(source.fallback_params)}`)
+  }
+  if (!Array.isArray(rows)) return []
+  return rows.map((row, index) => mapWarnPublicRow(row, source, index)).filter(Boolean)
 }
 
 function courtListenerSearchType(source) {
@@ -771,7 +796,7 @@ async function fetchCourtListenerResultRows(source, env) {
   return merged
 }
 
-function mapCourtListenerRow(source, row, index) {
+export function mapCourtListenerRow(source, row, index) {
   const title = first(row, ['caseName', 'caseNameFull', 'caption', 'case_name'], 'Court record signal')
   const eventType = financialEventType(source, row, title)
   if (!isLikelyBusinessRecord(title, eventType)) return null
@@ -788,6 +813,8 @@ function mapCourtListenerRow(source, row, index) {
   const severity = financialSeverity(eventType)
   const confidence = FINANCIAL_DISTRESS_TYPES.has(eventType) ? 78 : 72
   const entityName = isLienOrNoticeSource(source) ? entityFromLienCaption(title) : stripCasePrefix(title)
+  const filingDate = parseDate(first(row, ['dateFiled', 'date_filed', 'dateArgued', 'date_created']))
+  if (!filingDate) return null
 
   return {
     raw: { source_record_id: clean(row.absolute_url || row.cluster_id || row.id, `${source.slug}-${index + 1}`), fetched_url: url, payload: row },
@@ -797,7 +824,7 @@ function mapCourtListenerRow(source, row, index) {
       title: `${label}: ${stripCasePrefix(title)}`,
       summary: `${snippet} This is a public-record financial-distress signal for business review, not a credit report, prediction, or judgment.`,
       jurisdiction: first(row, ['court', 'court_id'], source.jurisdiction),
-      filing_date: parseDate(first(row, ['dateFiled', 'date_filed', 'dateArgued', 'date_created'])),
+      filing_date: filingDate,
       amount: null,
       severity,
       confidence,
@@ -838,6 +865,8 @@ async function fetchCourtListenerDockets(source, env) {
     const court = clean(row.court, source.jurisdiction)
     let url = clean(row.absolute_url, source.source_url)
     if (url.startsWith('/')) url = `https://www.courtlistener.com${url}`
+    const filingDate = parseDate(first(row, ['date_filed', 'date_created', 'date_modified']))
+    if (!filingDate) return []
 
     return {
       raw: {
@@ -855,7 +884,7 @@ async function fetchCourtListenerDockets(source, env) {
           `${clean(row.case_name_full) && clean(row.case_name_full) !== stripCasePrefix(title) ? `. Full caption on record: ${clean(row.case_name_full)}` : ''}` +
           '. This is public-record docket metadata for business review, not a credit report, prediction, or judgment.',
         jurisdiction: court,
-        filing_date: parseDate(first(row, ['date_filed', 'date_created', 'date_modified'])),
+        filing_date: filingDate,
         amount: null,
         severity: financialSeverity(eventType),
         confidence: 86,
