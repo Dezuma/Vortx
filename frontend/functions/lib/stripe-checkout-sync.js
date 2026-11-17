@@ -20,11 +20,21 @@ export function priceIdForPlan(env, plan) {
   return value || null
 }
 
+/**
+ * Stripe fulfills a Checkout Session only when payment_status is paid or
+ * no_payment_required (trial or zero amount). status=complete is also set
+ * for delayed methods while payment_status is still unpaid.
+ */
+export function checkoutSessionIsFulfilled(session) {
+  const paymentStatus = String(session?.payment_status || '').toLowerCase()
+  return paymentStatus === 'paid' || paymentStatus === 'no_payment_required'
+}
+
 export function normalizeCheckoutStatus(stripeSession) {
-  const paymentStatus = String(stripeSession?.payment_status || '').toLowerCase()
   const sessionStatus = String(stripeSession?.status || '').toLowerCase()
-  if (paymentStatus === 'paid' || sessionStatus === 'complete') return 'completed'
+  if (checkoutSessionIsFulfilled(stripeSession)) return 'completed'
   if (sessionStatus === 'expired') return 'expired'
+  if (sessionStatus === 'complete') return 'unpaid'
   if (sessionStatus === 'open') return 'open'
   return sessionStatus || 'open'
 }
