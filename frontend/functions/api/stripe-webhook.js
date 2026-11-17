@@ -4,6 +4,7 @@ import { sendSubscriptionWelcomeEmail } from '../lib/transactional-email.js'
 import { upsertCheckoutSessionRow } from '../lib/checkout-session-store.js'
 import {
   buildCheckoutSessionRow,
+  checkoutSessionIsFulfilled,
   fetchStripeCheckoutSession,
   loadExistingCheckoutRow,
   priceIdForPlan,
@@ -118,6 +119,13 @@ async function handleCheckoutSessionCompleted(env, object) {
   const row = buildCheckoutSessionRow(env, stripeSession, existing)
   if (!row.price_id) {
     row.price_id = priceIdForPlan(env, row.plan)
+  }
+  // Delayed payment methods complete the session while payment_status is unpaid.
+  // Granting here would activate the plan before funds settle, and a later
+  // failure is not subscribed. Card charges and trials are fulfilled.
+  if (!checkoutSessionIsFulfilled(stripeSession)) {
+    await upsertCheckout(env, row)
+    return
   }
   row.status = 'completed'
 
