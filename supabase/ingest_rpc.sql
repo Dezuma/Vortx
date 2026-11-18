@@ -60,6 +60,8 @@ declare
   owner_cik text;
   issuer_cik text;
   entity_cik text;
+  winning_title text;
+  winning_type text;
 begin
   insert into public.source_catalog (
     slug, name, jurisdiction, record_type, access_method, terms_status, refresh_cadence,
@@ -273,6 +275,26 @@ begin
         );
       end if;
 
+      -- Peak severity already stored for this entity. Re-ingesting a milder
+      -- filing (a later 13F after a WARN or bankruptcy) must not replace it.
+      select
+        least(100, greatest(0, le.severity)),
+        least(100, greatest(0, round(le.confidence)::integer)),
+        le.title,
+        le.event_type
+      into score_value, confidence_value, winning_title, winning_type
+      from public.legal_events le
+      where le.entity_id = entity_uuid
+      order by le.severity desc nulls last, le.filing_date desc nulls last, le.updated_at desc nulls last
+      limit 1;
+
+      if score_value is null then
+        score_value := least(100, greatest(0, public.json_text_as_int(event_payload->>'severity', 50)));
+        confidence_value := least(100, greatest(0, public.json_text_as_int(event_payload->>'confidence', 80)));
+        winning_title := coalesce(event_payload->>'title', 'Public record');
+        winning_type := coalesce(nullif(event_payload->>'event_type', ''), 'public_record');
+      end if;
+
       if not exists (
         select 1 from public.friction_scores fs
         where fs.entity_id = entity_uuid
@@ -284,8 +306,8 @@ begin
         )
         values (
           entity_uuid, score_value, confidence_value, 'flat',
-          jsonb_build_array(jsonb_build_object('label', event_payload->>'title', 'weight', least(50, greatest(0, score_value / 2)))),
-          jsonb_build_object(coalesce(event_payload->>'event_type', 'public_record'), score_value),
+          jsonb_build_array(jsonb_build_object('label', winning_title, 'weight', least(50, greatest(0, score_value / 2)))),
+          jsonb_build_object(coalesce(winning_type, 'public_record'), score_value),
           'scheduled-ingest-v2', now()
         );
       end if;
@@ -295,8 +317,8 @@ begin
       )
       values (
         entity_uuid, score_value, confidence_value, 'flat',
-        jsonb_build_array(jsonb_build_object('label', event_payload->>'title', 'weight', least(50, greatest(0, score_value / 2)))),
-        jsonb_build_object(coalesce(event_payload->>'event_type', 'public_record'), score_value),
+        jsonb_build_array(jsonb_build_object('label', winning_title, 'weight', least(50, greatest(0, score_value / 2)))),
+        jsonb_build_object(coalesce(winning_type, 'public_record'), score_value),
         'scheduled-ingest-v2', now()
       )
       on conflict (entity_id) do update
