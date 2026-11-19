@@ -934,12 +934,24 @@ function secUserAgent(env) {
   return `VortxResearchBot/1.0 (${contact})`
 }
 
+/**
+ * Ownership XML fetches are capped for EDGAR fair access.
+ * Atom rows past that cap must still be ingested. Dropping them lets the
+ * filing age out of the current-filings window without ever being stored.
+ */
+export function assembleForm4IngestEntries(entries, enrichedPrefix) {
+  const all = Array.isArray(entries) ? entries : []
+  const enriched = Array.isArray(enrichedPrefix) ? enrichedPrefix : []
+  if (enriched.length >= all.length) return enriched.slice(0, all.length)
+  return [...enriched, ...all.slice(enriched.length)]
+}
+
 async function enrichForm4Batch(entries, env, limit = 40) {
   const ua = secUserAgent(env)
   const out = []
-  const slice = entries.slice(0, limit)
-  for (let i = 0; i < slice.length; i += 1) {
-    const entry = slice[i]
+  const cap = Math.max(0, Math.min(Number(limit) || 0, entries.length))
+  for (let i = 0; i < cap; i += 1) {
+    const entry = entries[i]
     try {
       out.push(
         await enrichForm4EntryFromOwnership(entry, {
@@ -952,9 +964,9 @@ async function enrichForm4Batch(entries, env, limit = 40) {
       out.push(entry)
     }
     // EDGAR fair-access pacing between ownership XML fetches.
-    if (i + 1 < slice.length) await sleep(175)
+    if (i + 1 < cap) await sleep(175)
   }
-  return out
+  return assembleForm4IngestEntries(entries, out)
 }
 
 async function fetchSecEdgarForm4(source, env) {
