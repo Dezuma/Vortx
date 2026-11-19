@@ -26,6 +26,7 @@
     "test:case-stories": "node scripts/test-case-stories.mjs",
     "test:case-draft-focus": "node scripts/test-case-draft-focus.mjs",
     "test:trading-filings": "node scripts/test-trading-filings.mjs",
+    "test:form4-batch": "node scripts/test-form4-batch.mjs",
     "test:contractor-check": "node scripts/test-contractor-check.mjs",
     "test:contractor-check:prod": "node scripts/test-contractor-check-prod.mjs",
     "test:ingest-liens": "node scripts/test-ingest-liens.mjs",
