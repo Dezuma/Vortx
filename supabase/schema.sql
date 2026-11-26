@@ -1294,29 +1294,42 @@ begin
 
       entity_uuid := null;
 
+      -- CIK is the identity key. Ignore leading zeros so 123 and 0000000123 are one filer.
+      -- A shared display name must not merge a different CIK: two "SMITH JOHN" owners
+      -- are different people, and a person's filing must not land on the issuer's entity.
       if entity_cik is not null then
-        select id into entity_uuid from public.entities where cik = entity_cik limit 1;
-      end if;
-
-      if entity_uuid is null then
-        select ea.entity_id into entity_uuid
-        from public.entity_aliases ea
-        where ea.normalized_alias = normalized
+        select id into entity_uuid
+        from public.entities
+        where nullif(btrim(cik), '') is not null
+          and nullif(regexp_replace(cik, '^0+', ''), '')
+              is not distinct from nullif(regexp_replace(entity_cik, '^0+', ''), '')
         limit 1;
       end if;
 
       if entity_uuid is null then
-        select id into entity_uuid
-        from public.entities
-        where normalized_name = normalized
-        order by updated_at desc nulls last
-        limit 1;
-      end if;
-
-      if entity_uuid is null then
-        select id into entity_uuid
-        from public.entities
-        where canonical_name = entity_name
+        select e.id into entity_uuid
+        from public.entities e
+        left join public.entity_aliases ea
+          on ea.entity_id = e.id
+         and ea.normalized_alias = normalized
+        where (
+            ea.id is not null
+            or e.normalized_name = normalized
+            or e.canonical_name = entity_name
+          )
+          and (
+            entity_cik is null
+            or nullif(btrim(e.cik), '') is null
+            or nullif(regexp_replace(e.cik, '^0+', ''), '')
+               is not distinct from nullif(regexp_replace(entity_cik, '^0+', ''), '')
+          )
+        order by
+          case
+            when ea.id is not null then 0
+            when e.normalized_name = normalized then 1
+            else 2
+          end,
+          e.updated_at desc nulls last
         limit 1;
       end if;
 
