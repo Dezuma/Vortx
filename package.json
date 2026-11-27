@@ -46,6 +46,7 @@
     "test:scan-lead": "node scripts/test-scan-lead.mjs",
     "test:scan-watchlist": "node scripts/test-scan-watchlist.mjs",
     "test:watchlist-alerts": "node scripts/test-watchlist-alerts.mjs",
+    "test:watchlist-weekly-digest": "node scripts/test-watchlist-weekly-digest.mjs",
     "ops:watchlist-alerts": "node scripts/run-watchlist-alerts.mjs",
     "map:geocode": "node scripts/backfill-map-geocodes.mjs",
     "map:api-key": "node scripts/manage-enterprise-map-api-key.mjs",
