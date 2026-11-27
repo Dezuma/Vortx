@@ -101,9 +101,11 @@ export async function runWatchedWeeklyDigestJob(env, supabaseRest, { dryRun = fa
   const entityIds = [...new Set([...userEntityMap.values()].flatMap((set) => [...set]))]
   let events = []
   try {
+    // Coverage timestamps live on event_news_coverage. Selecting them from
+    // legal_events makes PostgREST 400 and aborts every weekly send.
     events = await supabaseRest(
       env,
-      `legal_events?select=id,entity_id,event_type,title,summary,filing_date,created_at,detected_at,news_mentioned_at,coverage_first_seen_at&entity_id=in.(${entityIds.map((id) => encodeURIComponent(id)).join(',')})&event_type=in.(form_4,congress_trade,institutional_13f)&created_at=gte.${encodeURIComponent(isoDaysAgo(LOOKBACK_DAYS))}&order=created_at.desc&limit=400`,
+      `legal_events?select=id,entity_id,event_type,title,summary,filing_date,created_at&entity_id=in.(${entityIds.map((id) => encodeURIComponent(id)).join(',')})&event_type=in.(form_4,congress_trade,institutional_13f)&created_at=gte.${encodeURIComponent(isoDaysAgo(LOOKBACK_DAYS))}&order=created_at.desc&limit=400`,
     )
   } catch (error) {
     result.ok = false
@@ -112,6 +114,31 @@ export async function runWatchedWeeklyDigestJob(env, supabaseRest, { dryRun = fa
   }
 
   events = (events || []).filter((e) => isTradingEventType(e.event_type))
+  const coverageByEvent = new Map()
+  const coverageIds = events.map((event) => event.id).filter(Boolean)
+  if (coverageIds.length) {
+    try {
+      const coverage = await supabaseRest(
+        env,
+        `event_news_coverage?select=event_id,detected_at,news_mentioned_at&event_id=in.(${coverageIds.map((id) => encodeURIComponent(id)).join(',')})`,
+      )
+      for (const row of coverage || []) {
+        if (row?.event_id) coverageByEvent.set(row.event_id, row)
+      }
+    } catch {
+      // Early badges are optional. A coverage lookup failure must not drop the digest.
+    }
+  }
+  events = events.map((event) => {
+    const coverage = coverageByEvent.get(event.id)
+    if (!coverage) return event
+    return {
+      ...event,
+      detected_at: coverage.detected_at,
+      news_mentioned_at: coverage.news_mentioned_at,
+      coverage_first_seen_at: coverage.news_mentioned_at,
+    }
+  })
   let entities = []
   try {
     entities = await supabaseRest(
