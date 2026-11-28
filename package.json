@@ -59,6 +59,7 @@
     "test:map-performance": "node scripts/test-map-performance.mjs",
     "test:map-runtime": "node scripts/test-map-runtime.mjs",
     "test:map-geocode-providers": "node scripts/test-map-geocode-providers.mjs",
+    "test:map-geocoding-job": "node scripts/test-map-geocoding-job.mjs",
     "test:browse-nav": "node scripts/test-browse-nav.mjs",
     "test:most-watched": "node scripts/test-most-watched.mjs",
     "test:e2e-scan": "node scripts/e2e-scan-production.mjs",
