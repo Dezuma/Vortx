@@ -189,6 +189,82 @@ function signalGroup(eventType) {
   return eventType === 'form_4' || eventType === 'congress_trade' ? 'trade' : 'distress'
 }
 
+const CANDIDATE_PAGE_SIZE = 200
+const MAX_CANDIDATE_SCAN = 2000
+
+/**
+ * Newest ingested map events, not newest filing dates.
+ * A WARN notice dated last week is still new work if it was ingested today.
+ */
+export function mapEventCandidatePath(offset, pageSize) {
+  const start = Math.max(0, Number(offset) || 0)
+  const size = Math.min(CANDIDATE_PAGE_SIZE, Math.max(1, Number(pageSize) || CANDIDATE_PAGE_SIZE))
+  return [
+    'legal_events?select=id,entity_id,raw_record_id,event_type,title,summary,jurisdiction,filing_date',
+    `&event_type=in.(${MAP_EVENT_TYPES.join(',')})`,
+    '&order=created_at.desc,id.desc',
+    `&limit=${size}`,
+    `&offset=${start}`,
+  ].join('')
+}
+
+/** Keep events that have never been written to map_signal_locations. */
+export function eventsMissingLocations(events, locatedIds, limit) {
+  const located = locatedIds instanceof Set ? locatedIds : new Set(locatedIds || [])
+  const cap = Math.max(0, Number(limit) || 0)
+  const missing = []
+  for (const event of events || []) {
+    if (!event?.id || located.has(event.id)) continue
+    missing.push(event)
+    if (missing.length >= cap) break
+  }
+  return missing
+}
+
+async function rowsByColumn(env, supabaseRest, table, select, idColumn, ids) {
+  const unique = [...new Set((ids || []).map((id) => String(id || '').trim()).filter(Boolean))]
+  const rows = []
+  const chunkSize = 60
+  for (let index = 0; index < unique.length; index += chunkSize) {
+    const chunk = unique.slice(index, index + chunkSize)
+    const filter = chunk.map((id) => encodeURIComponent(id)).join(',')
+    const batch = await supabaseRest(
+      env,
+      `${table}?select=${encodeURIComponent(select)}&${idColumn}=in.(${filter})`,
+    )
+    if (Array.isArray(batch)) rows.push(...batch)
+  }
+  return rows
+}
+
+async function loadUngeocodedMapEvents(env, supabaseRest, limit) {
+  const pending = []
+  let examined = 0
+  let previousHead = ''
+  for (let offset = 0; pending.length < limit && offset < MAX_CANDIDATE_SCAN; offset += CANDIDATE_PAGE_SIZE) {
+    const pageSize = Math.min(CANDIDATE_PAGE_SIZE, MAX_CANDIDATE_SCAN - offset)
+    const rows = await supabaseRest(env, mapEventCandidatePath(offset, pageSize))
+    const page = Array.isArray(rows) ? rows : []
+    if (!page.length) break
+    const head = String(page[0]?.id || '')
+    if (head && head === previousHead) break
+    previousHead = head
+    examined += page.length
+    const existing = await rowsByColumn(
+      env,
+      supabaseRest,
+      'map_signal_locations',
+      'event_id',
+      'event_id',
+      page.map((row) => row.id),
+    )
+    const located = new Set((existing || []).map((row) => row.event_id))
+    pending.push(...eventsMissingLocations(page, located, limit - pending.length))
+    if (page.length < pageSize) break
+  }
+  return { pending, examined }
+}
+
 /**
  * Geocode recent map-eligible events that do not have a cache/review row yet.
  * Also retries unresolved Form 4 issuer addresses, including foreign HQs.
@@ -201,28 +277,16 @@ export async function runMapGeocodingJob(
   const result = { ok: true, scanned: 0, processed: 0, resolved: 0, unresolved: 0, errors: [] }
   const limit = Math.min(100, Math.max(1, Number(maxEvents) || 60))
   const retryLimit = Math.min(25, Math.max(5, Math.floor(limit / 3)))
-  const rawEventRows = await supabaseRest(
-    env,
-    `legal_events?select=id,entity_id,raw_record_id,event_type,title,summary,jurisdiction,filing_date&event_type=in.(${MAP_EVENT_TYPES.join(',')})&order=filing_date.desc,created_at.desc&limit=${limit}`,
-  ).catch((error) => {
+  let pending = []
+  try {
+    const loaded = await loadUngeocodedMapEvents(env, supabaseRest, limit)
+    pending = loaded.pending
+    result.scanned = loaded.examined
+  } catch (error) {
     result.ok = false
     result.errors.push(error instanceof Error ? error.message : String(error))
-    return []
-  })
-  const eventRows = Array.isArray(rawEventRows) ? rawEventRows : []
-  result.scanned = eventRows.length
-
-  const eventIds = eventRows.map((row) => row.id)
-  const existing = eventIds.length
-    ? await supabaseRestByIds(env, {
-        table: 'map_signal_locations',
-        select: 'event_id',
-        ids: eventIds,
-        idColumn: 'event_id',
-      }).catch(() => [])
-    : []
-  const existingIds = new Set((existing || []).map((row) => row.event_id))
-  const pending = eventRows.filter((row) => !existingIds.has(row.id))
+    return result
+  }
 
   const retryLocations = await supabaseRest(
     env,
